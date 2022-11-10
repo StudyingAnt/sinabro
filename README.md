@@ -1,1 +1,1 @@
-# Sinabro - Sequential Mutations Simulator with Python
+# Sinabro - Sequential Mutations Simulator
