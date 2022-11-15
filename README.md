@@ -4,5 +4,5 @@
 ## How to use
 Import Sinabro as:
 ```python
-Import sinabro as snbr
+import sinabro as snbr
 ```
