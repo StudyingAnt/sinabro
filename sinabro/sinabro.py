@@ -26,7 +26,7 @@ def is_codon_synonymous(codon1, codon2):
         return False
 
 
-def random_single_substitution(seq, start=None, end=None, gc=0.5):
+def random_single_substitution(seq, start=None, end=None):
     if isinstance(seq, str):
         seq = MutableSeq(seq)
         data_type = "str"
@@ -63,8 +63,9 @@ def random_single_substitution(seq, start=None, end=None, gc=0.5):
     idx = np.random.choice(range(start, end+1), 1)[0]    
     nt_before = seq[idx:idx+1]
     A = ["A", "C", "G", "T"]
+    A.remove(nt_before)
     nt_after = np.random.choice(A, 1,
-                                p=0.5*np.array([1-gc, gc, gc, 1-gc])
+                                p=np.array([1/3, 1/3, 1/3])
                                 )[0]
     seq[idx:idx+1] = nt_after
     description = f"c.{str(idx)}{nt_before}>{nt_after}"
@@ -113,13 +114,12 @@ class Trajectory():
 
         return self._data
         
-    def add_mutated_sequence(self, method="random", gc=0.5, motif=None, P=None):
+    def add_mutated_sequence(self, method="random", motif=None, P=None):
         if method == "random":
             last_seq = self._data[-1]
             new_seq, description = random_single_substitution(last_seq,
                                                               start=1,
-                                                              end=self._length-2,
-                                                              gc=gc
+                                                              end=self._length-2
                                                               )
             self.append(new_seq, description=description)
         elif method == "motif":
@@ -133,12 +133,3 @@ class Trajectory():
 
         return self._data
                 
-
-
-
-traj1 = Trajectory("TATGCGTGCCACTTGAC")
-
-print(traj1._data)        
-traj1.add_mutated_sequence()
-print(traj1._data)
-print(traj1._descriptions)
