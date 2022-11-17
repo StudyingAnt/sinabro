@@ -76,7 +76,119 @@ def random_single_substitution(seq, start=None, end=None):
         return Seq(seq), description
     elif data_type == "MutableSeq":
         return seq, description
+
+
+def get_target_of_mutation_type(mutation_type):
+    open_bracet_pos = re.search("\[", mutation_type).start()
+    change_symbol_pos = re.search("\>", mutation_type).start()
+    close_bracet_pos = re.search("\]", mutation_type).start()
+
+    before_bracet = mutation_type[:open_bracet_pos]
+    after_bracet = mutation_type[close_bracet_pos+1:]
+    seq_target = mutation_type[open_bracet_pos+1:change_symbol_pos]
+
+    seq_output = f"{before_bracet}{seq_target}{after_bracet}"
+
+    return seq_output
+
+
+def get_result_of_mutation_type(mutation_type):
+    open_bracet_pos = re.search("\[", mutation_type).start()
+    change_symbol_pos = re.search("\>", mutation_type).start()
+    close_bracet_pos = re.search("\]", mutation_type).start()
+
+    before_bracet = mutation_type[:open_bracet_pos]
+    after_bracet = mutation_type[close_bracet_pos+1:]
+    seq_result = mutation_type[change_symbol_pos+1:close_bracet_pos]
+
+    seq_output = f"{before_bracet}{seq_result}{after_bracet}"
+
+    return seq_output
+
+
+def get_motif_indices(seq, mutation_type):
+    seq_target = get_target_of_mutation_type(mutation_type)
+    idx_motifs_obj = re.finditer(pattern=seq_target, string=str(seq))
+    idx_motifs = [idx.start() for idx in idx_motifs_obj]
     
+    return idx_motifs
+
+
+def get_idx_offset_of_mutation_type(mutation_type):
+    idx_offset = re.search("\[", mutation_type).start()
+
+    return idx_offset
+
+
+def get_idx_target_from_idx_motif(idx_motif, mutation_type):
+    idx_target = idx_motif+get_idx_offset_of_mutation_type(mutation_type)
+
+    return idx_target
+
+
+def get_idx_motif_from_idx_target(idx_target, mutation_type):
+    idx_motif = idx_target-get_idx_offset_of_mutation_type(mutation_type)
+
+    return idx_motif
+    
+    
+def mutate_seq_with_mutation_type(seq, mutation_type, start=None, end=None):
+    if isinstance(seq, str):
+        seq = MutableSeq(seq)
+        data_type = "str"
+    elif isinstance(seq, Seq):
+        seq = MutableSeq(seq)
+        data_type = "Seq"
+    elif isinstance(seq, MutableSeq):
+        data_type = "MutableSeq"
+    else:
+        raise TypeError(
+            "seq should be a string, Seq, or MutableSeq object"
+        )
+
+    if start is not None:
+        if isinstance(start, int):
+            pass                
+        else:
+            raise TypeError(
+                "start should be an integer object"
+            )
+    else:
+        start = 0
+        
+    if end is not None:
+        if isinstance(end, int):
+            pass                
+        else:
+            raise TypeError(
+                "end should be an integer object"
+            )
+    else:
+        end = len(seq)-1
+
+    idx_motifs = get_motif_indices(seq, mutation_type)
+    idx_motifs = [idx for idx in idx_motifs if idx >= start and idx <= end]
+
+    if not idx_motifs:
+        return Seq(""), "", 1
+    
+    # select specific motif to mutate
+    idx_motif = np.random.choice(idx_motifs, 1)[0] 
+    idx_target = get_idx_target_from_idx_motif(idx_motif, mutation_type)
+
+    nt_before = seq[idx_target:idx_target+1]
+    seq[idx_motif:idx_target+1] = get_result_of_mutation_type(mutation_type)
+    nt_after = seq[idx_target:idx_target+1]
+    
+    description = f"c.{str(idx_target)}{nt_before}>{nt_after}"
+
+    if data_type == "str":
+        return str(seq), description, 0
+    elif data_type == "Seq":
+        return Seq(seq), description, 0
+    elif data_type == "MutableSeq":
+        return seq, description, 0
+
     
 class Trajectory():    
     def __init__(self, data):
@@ -94,8 +206,9 @@ class Trajectory():
                 "data should be a string, Seq, or MutableSeq object"
             )
         self._data.append(self._original_seq)
-        self._length = len(self._original_seq)
+        self._seq_length = len(self._original_seq)
         self._descriptions = ["original"]
+        self._length = 0
 
     def append(self, seq, description=""):
         if seq is None:
@@ -114,16 +227,27 @@ class Trajectory():
 
         return self._data
         
-    def add_mutated_sequence(self, method="random", motif=None, P=None):
+    def add_mutated_sequence(self, method="random", mutation_type=None, P=None):
         if method == "random":
             last_seq = self._data[-1]
             new_seq, description = random_single_substitution(last_seq,
                                                               start=1,
-                                                              end=self._length-2
+                                                              end=self._seq_length-2
                                                               )
             self.append(new_seq, description=description)
-        elif method == "motif":
-            pass
+            self._length = self._length+1
+        elif method == "mutation_type":
+            last_seq = self._data[-1]
+            new_seq, description, e = mutate_seq_with_mutation_type(last_seq,
+                                                                    mutation_type=mutation_type,
+                                                                    start=1,
+                                                                    end=self._seq_length-2
+                                                                    )
+            if not e:
+                self.append(new_seq, description=description)
+                self._length = self._length+1
+            else:
+                pass
         elif method == "signature":
             pass
         else:

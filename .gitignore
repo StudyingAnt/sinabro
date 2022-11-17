@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Test file
+/sinabro/test.py
+/sinabro/test.py~
