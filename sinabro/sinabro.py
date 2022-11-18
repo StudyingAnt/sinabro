@@ -15,16 +15,17 @@ from Bio.Data import CodonTable
 
 from typing import Union
 
-from _mut_func_helper import (
-    _get_target_of_mut_type,
-    _get_result_of_mut_type,
-    _get_motif_indices,
-    _get_idx_offset_of_mut_type,
-    _get_idx_target_from_idx_motif,
-    _get_idx_motif_from_idx_target
+from _mutate._random_single_substitution import (
+    random_single_substitution
+)
+from _mutate._mutate_seq_with_mut_type import (
+    mutate_seq_with_mut_type
+)
+from _mutate._mutate_seq_with_mutational_signature import (
+    mutate_seq_with_mutational_signature
 )
 
-
+"""
 # A list of all trinucleotides. datatype: BioPtyhon Seq class
 dna_bases = ["A", "C", "G", "T"]
 trinucleotides = []
@@ -211,7 +212,7 @@ def mutate_seq_with_mutational_signature(
         return Seq(seq), idx_target, description, 0
     elif data_type == "MutableSeq":
         return seq, idx_target, description, 0
- 
+ """
 
 def is_codon_synonymous(codon1, codon2):
     codon_table = CodonTable.standard_dna_table.forward_table
@@ -224,7 +225,7 @@ def is_codon_synonymous(codon1, codon2):
     else:
         return False
 
-
+"""
 def random_single_substitution(seq, start=None, end=None):
     if isinstance(seq, str):
         seq = MutableSeq(seq)
@@ -276,60 +277,6 @@ def random_single_substitution(seq, start=None, end=None):
     elif data_type == "MutableSeq":
         return seq, idx, description
 
-"""
-def get_target_of_mut_type(mut_type):
-    open_bracet_pos = re.search("\[", mut_type).start()
-    change_symbol_pos = re.search("\>", mut_type).start()
-    close_bracet_pos = re.search("\]", mut_type).start()
-
-    before_bracet = mut_type[:open_bracet_pos]
-    after_bracet = mut_type[close_bracet_pos+1:]
-    seq_target = mut_type[open_bracet_pos+1:change_symbol_pos]
-
-    seq_output = f"{before_bracet}{seq_target}{after_bracet}"
-
-    return seq_output
-
-
-def get_result_of_mut_type(mut_type):
-    open_bracet_pos = re.search("\[", mut_type).start()
-    change_symbol_pos = re.search("\>", mut_type).start()
-    close_bracet_pos = re.search("\]", mut_type).start()
-
-    before_bracet = mut_type[:open_bracet_pos]
-    after_bracet = mut_type[close_bracet_pos+1:]
-    seq_result = mut_type[change_symbol_pos+1:close_bracet_pos]
-
-    seq_output = f"{before_bracet}{seq_result}{after_bracet}"
-
-    return seq_output
-
-
-def get_motif_indices(seq, mut_type):
-    seq_target = get_target_of_mut_type(mut_type)
-    idx_motifs_obj = re.finditer(pattern=seq_target, string=str(seq))
-    idx_motifs = [idx.start() for idx in idx_motifs_obj]
-    
-    return idx_motifs
-
-
-def get_idx_offset_of_mut_type(mut_type):
-    idx_offset = re.search("\[", mut_type).start()
-
-    return idx_offset
-
-
-def get_idx_target_from_idx_motif(idx_motif, mut_type):
-    idx_target = idx_motif+get_idx_offset_of_mut_type(mut_type)
-
-    return idx_target
-
-
-def get_idx_motif_from_idx_target(idx_target, mut_type):
-    idx_motif = idx_target-get_idx_offset_of_mut_type(mut_type)
-
-    return idx_motif
- """   
     
 def mutate_seq_with_mut_type(seq, mut_type, start=None, end=None):
     if isinstance(seq, str):
@@ -387,7 +334,7 @@ def mutate_seq_with_mut_type(seq, mut_type, start=None, end=None):
         return Seq(seq), idx_target, description, 0
     elif data_type == "MutableSeq":
         return seq, idx_target, description, 0
-
+"""
     
 class Trajectory():    
     def __init__(self, data):
