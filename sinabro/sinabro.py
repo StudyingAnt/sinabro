@@ -15,6 +15,15 @@ from Bio.Data import CodonTable
 
 from typing import Union
 
+from _mut_func_helper import (
+    _get_target_of_mut_type,
+    _get_result_of_mut_type,
+    _get_motif_indices,
+    _get_idx_offset_of_mut_type,
+    _get_idx_target_from_idx_motif,
+    _get_idx_motif_from_idx_target
+)
+
 
 # A list of all trinucleotides. datatype: BioPtyhon Seq class
 dna_bases = ["A", "C", "G", "T"]
@@ -126,15 +135,18 @@ def mutate_seq_with_mutational_signature(
         end = len(seq)-1
 
     signatures = [
-        "SBS1", "SBS2", "SBS3", "SBS4", "SBS5", "SBS6", "SBS7a", "SBS7b", "SBS7c", "SBS7d",  
-    	"SBS8", "SBS9", "SBS10a", "SBS10b", "SBS10c", "SBS10d", "SBS11", "SBS12", "SBS13",
-        "SBS14", "SBS15", "SBS16", "SBS17a", "SBS17b", "SBS18", "SBS19", "SBS20", "SBS21",
-        "SBS22", "SBS23", "SBS24", "SBS25", "SBS26", "SBS27", "SBS28", "SBS29", "SBS30",
-        "SBS31", "SBS32", "SBS33", "SBS34", "SBS35", "SBS36", "SBS37", "SBS38", "SBS39",
-        "SBS40", "SBS41", "SBS42", "SBS43", "SBS44", "SBS45", "SBS46", "SBS47", "SBS48",
-        "SBS49", "SBS50", "SBS51", "SBS52", "SBS53", "SBS54", "SBS55", "SBS56", "SBS57",
-        "SBS58", "SBS59", "SBS60", "SBS84", "SBS85", "SBS86", "SBS87", "SBS88", "SBS89",
-        "SBS90", "SBS91", "SBS92", "SBS93", "SBS94", "SBS95"
+        "SBS1", "SBS2", "SBS3", "SBS4", "SBS5", "SBS6", "SBS7a", "SBS7b", 
+        "SBS7c", "SBS7d", "SBS8", "SBS9", "SBS10a", "SBS10b", "SBS10c", 
+        "SBS10d", "SBS11", "SBS12", "SBS13", "SBS14", "SBS15", "SBS16", 
+        "SBS17a", "SBS17b", "SBS18", "SBS19", "SBS20", "SBS21", "SBS22", 
+        "SBS23", "SBS24", "SBS25", "SBS26", "SBS27", "SBS28", "SBS29", 
+        "SBS30", "SBS31", "SBS32", "SBS33", "SBS34", "SBS35", "SBS36", 
+        "SBS37", "SBS38", "SBS39", "SBS40", "SBS41", "SBS42", "SBS43", 
+        "SBS44", "SBS45", "SBS46", "SBS47", "SBS48", "SBS49", "SBS50", 
+        "SBS51", "SBS52", "SBS53", "SBS54", "SBS55", "SBS56", "SBS57",
+        "SBS58", "SBS59", "SBS60", "SBS84", "SBS85", "SBS86", "SBS87", 
+        "SBS88", "SBS89", "SBS90", "SBS91", "SBS92", "SBS93", "SBS94", 
+        "SBS95"
         ]
 
     if mutational_signature == "custom":
@@ -147,9 +159,12 @@ def mutate_seq_with_mutational_signature(
                 strand_bias=strand_bias
                 )
     elif mutational_signature in signatures:
-        signature_file_path = (
-            f"../cosmic_signatures/COSMIC_v{str(cosmic_version)}.1_SBS_{genome_ref}.txt"
-        )
+        tokens = [
+            "../cosmic_signatures/COSMIC_v",
+            str(cosmic_version), ".1_SBS_",
+            genome_ref, ".txt"
+        ]
+        signature_file_path = "".join(tokens)
         full_mutational_signature = make_full_mutational_signature(
                 input_file_path=signature_file_path,
                 column=mutational_signature,
@@ -170,9 +185,23 @@ def mutate_seq_with_mutational_signature(
     idx_target = math.floor(idx_flat/4)
 
     if str(seq[idx_target]) not in ["C", "T"]:
-        description = f"c.{idx_target}{str(Seq(seq[idx_target+1]).complement())}[{str(Seq(seq[idx_target]).complement())}>{str(Seq(dna_bases[idx_base]).complement())}]{str(Seq(seq[idx_target-1]).complement())}"
+        tokens = [
+            "c.", str(idx_target), 
+            str(Seq(seq[idx_target+1]).complement()), "[", 
+            str(Seq(seq[idx_target]).complement()), ">", 
+            str(Seq(dna_bases[idx_base]).complement()), "]",
+            str(Seq(seq[idx_target-1]).complement())
+        ]
+        description = "".join(tokens)
     else:
-        description = f"c.{idx_target}{str(seq[idx_target-1])}[{str(seq[idx_target])}>{dna_bases[idx_base]}]{str(seq[idx_target+1])}"
+        tokens = [
+            "c.", str(idx_target),
+            str(seq[idx_target-1]), "[",
+            str(seq[idx_target]), ">",
+            dna_bases[idx_base], "]",
+            str(seq[idx_target+1])
+        ]
+        description = "".join(tokens)
 
     seq[idx_target] = dna_bases[idx_base]
 
@@ -247,7 +276,7 @@ def random_single_substitution(seq, start=None, end=None):
     elif data_type == "MutableSeq":
         return seq, idx, description
 
-
+"""
 def get_target_of_mut_type(mut_type):
     open_bracet_pos = re.search("\[", mut_type).start()
     change_symbol_pos = re.search("\>", mut_type).start()
@@ -300,7 +329,7 @@ def get_idx_motif_from_idx_target(idx_target, mut_type):
     idx_motif = idx_target-get_idx_offset_of_mut_type(mut_type)
 
     return idx_motif
-    
+ """   
     
 def mutate_seq_with_mut_type(seq, mut_type, start=None, end=None):
     if isinstance(seq, str):
@@ -336,7 +365,7 @@ def mutate_seq_with_mut_type(seq, mut_type, start=None, end=None):
     else:
         end = len(seq)-1
 
-    idx_motifs = get_motif_indices(seq, mut_type)
+    idx_motifs = _get_motif_indices(seq, mut_type)
     idx_motifs = [idx for idx in idx_motifs if idx >= start and idx <= end]
 
     if not idx_motifs:
@@ -344,10 +373,10 @@ def mutate_seq_with_mut_type(seq, mut_type, start=None, end=None):
     
     # select specific motif to mutate
     idx_motif = np.random.choice(idx_motifs, 1)[0] 
-    idx_target = get_idx_target_from_idx_motif(idx_motif, mut_type)
+    idx_target = _get_idx_target_from_idx_motif(idx_motif, mut_type)
 
     nt_before = seq[idx_target:idx_target+1]
-    seq[idx_motif:idx_target+1] = get_result_of_mut_type(mut_type)
+    seq[idx_motif:idx_target+1] = _get_result_of_mut_type(mut_type)
     nt_after = seq[idx_target:idx_target+1]
     
     description = f"c.{str(idx_target)}{nt_before}>{nt_after}"
@@ -397,9 +426,17 @@ class Trajectory():
 
         return self._data
         
-    def add_mutated_sequence(self, 
-    method="random", mut_type=None, mutational_signature=None, cosmic_version=3.3, 
-    genome_ref="GRCh37", custom_signature_path=None, column=None, strand_bias=0.5):
+    def add_mutated_sequence(
+        self,
+        method: str = "random",
+        mut_type: str = None,
+        mutational_signature: str = None,
+        cosmic_version: float = 3.3,
+        genome_ref: str = "GRCh37",
+        custom_signature_path: str = None,
+        column: str = None,
+        strand_bias: float = 0.5
+    ) -> list:
         if method == "random":
             last_seq = self._data[-1]
             new_seq, idx_target, description = random_single_substitution(
