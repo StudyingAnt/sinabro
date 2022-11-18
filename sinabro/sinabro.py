@@ -40,7 +40,7 @@ def make_full_mutational_signature(
     # fill in full_mutational_signature numpy 2d array
     full_mutational_signature = np.zeros((4,64))
     mut_types = list(sbs.index)
-
+    
     for mut_type in mut_types:
         trinucleotide_f = f"{mut_type[0]}{mut_type[2]}{mut_type[6]}"
         trinucleotide_r = str(Seq(trinucleotide_f).reverse_complement())
@@ -56,7 +56,7 @@ def make_full_mutational_signature(
         full_mutational_signature[i1,j1] = mut_type_percentage
         full_mutational_signature[i2,j2] = mut_type_percentage
 
-        return full_mutational_signature
+    return full_mutational_signature
 
 
 def compute_mut_prob_matrix(seq, full_mutational_signature):
@@ -69,12 +69,12 @@ def compute_mut_prob_matrix(seq, full_mutational_signature):
     trint_type_vector.append(-1)
 
     P_before_norm = np.zeros((4, len(seq)))
-
+    
     for idx in range(1, len(seq)-1):
         P_before_norm[:, idx] = (
             full_mutational_signature[:, trint_type_vector[idx]]
         )
-
+   
     S = np.sum(P_before_norm)
     P = P_before_norm/S
 
@@ -83,13 +83,15 @@ def compute_mut_prob_matrix(seq, full_mutational_signature):
 
 def mutate_seq_with_mutational_signature(
     seq: Union[str, Seq, MutableSeq],
+    start: int = None,
+    end: int = None,
     mutational_signature: str = "SBS1",
     cosmic_version: float = 3.3,
     genome_ref: str = "GRCh37",
     custom_signature_path: str = None,
     column: str = None,
     strand_bias: float = 0.5
-) -> Tuple[Union[str, Seq, MutableSeq], int, str, int]:
+) -> tuple[Union[str, Seq, MutableSeq], int, str, int]:
     if isinstance(seq, str):
         seq = MutableSeq(seq)
         data_type = "str"
@@ -124,15 +126,15 @@ def mutate_seq_with_mutational_signature(
         end = len(seq)-1
 
     signatures = [
-        SBS1, SBS2, SBS3, SBS4, SBS5, SBS6, SBS7a, SBS7b, SBS7c, SBS7d,  
-    	SBS8, SBS9, SBS10a, SBS10b, SBS10c, SBS10d, SBS11, SBS12, SBS13,
-        SBS14, SBS15, SBS16, SBS17a, SBS17b, SBS18, SBS19, SBS20, SBS21,
-        SBS22, SBS23, SBS24, SBS25, SBS26, SBS27, SBS28, SBS29, SBS30,
-        SBS31, SBS32, SBS33, SBS34, SBS35, SBS36, SBS37, SBS38, SBS39,
-        SBS40, SBS41, SBS42, SBS43, SBS44, SBS45, SBS46, SBS47, SBS48,
-        SBS49, SBS50, SBS51, SBS52, SBS53, SBS54, SBS55, SBS56, SBS57,
-        SBS58, SBS59, SBS60, SBS84, SBS85, SBS86, SBS87, SBS88, SBS89,
-        SBS90, SBS91, SBS92, SBS93, SBS94, SBS95
+        "SBS1", "SBS2", "SBS3", "SBS4", "SBS5", "SBS6", "SBS7a", "SBS7b", "SBS7c", "SBS7d",  
+    	"SBS8", "SBS9", "SBS10a", "SBS10b", "SBS10c", "SBS10d", "SBS11", "SBS12", "SBS13",
+        "SBS14", "SBS15", "SBS16", "SBS17a", "SBS17b", "SBS18", "SBS19", "SBS20", "SBS21",
+        "SBS22", "SBS23", "SBS24", "SBS25", "SBS26", "SBS27", "SBS28", "SBS29", "SBS30",
+        "SBS31", "SBS32", "SBS33", "SBS34", "SBS35", "SBS36", "SBS37", "SBS38", "SBS39",
+        "SBS40", "SBS41", "SBS42", "SBS43", "SBS44", "SBS45", "SBS46", "SBS47", "SBS48",
+        "SBS49", "SBS50", "SBS51", "SBS52", "SBS53", "SBS54", "SBS55", "SBS56", "SBS57",
+        "SBS58", "SBS59", "SBS60", "SBS84", "SBS85", "SBS86", "SBS87", "SBS88", "SBS89",
+        "SBS90", "SBS91", "SBS92", "SBS93", "SBS94", "SBS95"
         ]
 
     if mutational_signature == "custom":
@@ -146,8 +148,7 @@ def mutate_seq_with_mutational_signature(
                 )
     elif mutational_signature in signatures:
         signature_file_path = (
-            f"../cosmic_signatures/
-            COSMIC_v{str(cosmic_version)}.1_SBS_{genome_ref}.txt"
+            f"../cosmic_signatures/COSMIC_v{str(cosmic_version)}.1_SBS_{genome_ref}.txt"
         )
         full_mutational_signature = make_full_mutational_signature(
                 input_file_path=signature_file_path,
@@ -162,22 +163,16 @@ def mutate_seq_with_mutational_signature(
     num_nonzero = np.count_nonzero(P)
     if not num_nonzero:
         return Seq(""), -1, "", 1
-    
-    idx_flat = np.random.choice(len(seq)*4, p=P.flatten("F"))[0]
+   
+    idx_flat = np.random.choice(len(seq)*4, p=P.flatten("F"))
 
     idx_base = idx_flat%4
     idx_target = math.floor(idx_flat/4)
 
     if str(seq[idx_target]) not in ["C", "T"]:
-        description = f"{str(Seq(seq[idx_target+1]).complement())}[
-            {str(Seq(seq[idx_target]).complement())}>
-            {str(Seq(dna_bases[idx_base]).complement())}]
-            {str(Seq(seq[idx_target-1]).complement())}"
+        description = f"c.{idx_target}{str(Seq(seq[idx_target+1]).complement())}[{str(Seq(seq[idx_target]).complement())}>{str(Seq(dna_bases[idx_base]).complement())}]{str(Seq(seq[idx_target-1]).complement())}"
     else:
-        description = f"{str(seq[idx_target-1])}[
-            {str(seq[idx_target])}>
-            {dna_bases[idx_base]}]
-            {str(seq[idx_target+1])}"
+        description = f"c.{idx_target}{str(seq[idx_target-1])}[{str(seq[idx_target])}>{dna_bases[idx_base]}]{str(seq[idx_target+1])}"
 
     seq[idx_target] = dna_bases[idx_base]
 
