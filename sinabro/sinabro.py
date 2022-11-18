@@ -402,7 +402,9 @@ class Trajectory():
 
         return self._data
         
-    def add_mutated_sequence(self, method="random", mut_type=None, mutational_signature=None, cosmic_version=None, genome_ref=None, custom_signature_path=None, column=None, strand_bias=None):
+    def add_mutated_sequence(self, 
+    method="random", mut_type=None, mutational_signature=None, cosmic_version=3.3, 
+    genome_ref="GRCh37", custom_signature_path=None, column=None, strand_bias=0.5):
         if method == "random":
             last_seq = self._data[-1]
             new_seq, idx_target, description = random_single_substitution(
