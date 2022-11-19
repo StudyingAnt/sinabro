@@ -1,20 +1,10 @@
-import re
-import os
-import math
-import random
-import sys
-
 import numpy as np
-import pandas as pd
 
-from Bio import SeqIO
 from Bio.Seq import Seq, MutableSeq
-from Bio.SeqRecord import SeqRecord
-from Bio.Data import CodonTable
-
 from typing import Union
 
 from ._helper import (
+    MutInfo,
     _get_target_of_mut_type,
     _get_result_of_mut_type,
     _get_motif_indices,
@@ -58,19 +48,20 @@ def random_single_substitution(seq, start=None, end=None):
     else:
         end = len(seq)-1
 
-    idx = np.random.choice(range(start, end+1), 1)[0]    
-    nt_before = seq[idx:idx+1]
+    idx_target = np.random.choice(range(start, end+1), 1)[0]    
+    nt_before = seq[idx_target:idx_target+1]
     A = ["A", "C", "G", "T"]
     A.remove(nt_before)
     nt_after = np.random.choice(A, 1,
                                 p=np.array([1/3, 1/3, 1/3])
                                 )[0]
-    seq[idx:idx+1] = nt_after
-    description = f"c.{str(idx)}{nt_before}>{nt_after}"
+    seq[idx_target:idx_target+1] = nt_after
+    hgvs = f"c.{str(idx_target)}{nt_before}>{nt_after}"
+    mut_type = f"[{nt_before}>{nt_after}]"
 
     if data_type == "str":
-        return str(seq), idx, description
+        return MutInfo(str(seq), idx_target, hgvs, mut_type, 0)
     elif data_type == "Seq":
-        return Seq(seq), idx, description
+        return MutInfo(Seq(seq), idx_target, hgvs, mut_type, 0)
     elif data_type == "MutableSeq":
-        return seq, idx, description
+        return MutInfo(seq, idx_target, hgvs, mut_type, 0)

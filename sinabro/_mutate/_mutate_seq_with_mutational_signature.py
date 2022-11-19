@@ -1,20 +1,13 @@
-import re
-import os
 import math
-import random
-import sys
 
 import numpy as np
 import pandas as pd
 
-from Bio import SeqIO
 from Bio.Seq import Seq, MutableSeq
-from Bio.SeqRecord import SeqRecord
-from Bio.Data import CodonTable
-
 from typing import Union
 
 from ._helper import (
+    MutInfo,
     _get_target_of_mut_type,
     _get_result_of_mut_type,
     _get_motif_indices,
@@ -176,7 +169,7 @@ def mutate_seq_with_mutational_signature(
 
     num_nonzero = np.count_nonzero(P)
     if not num_nonzero:
-        return Seq(""), -1, "", 1
+        return MutInfo(MutableSeq(""), -1, "", "", 1)
    
     idx_flat = np.random.choice(len(seq)*4, p=P.flatten("F"))
 
@@ -184,29 +177,39 @@ def mutate_seq_with_mutational_signature(
     idx_target = math.floor(idx_flat/4)
 
     if str(seq[idx_target]) not in ["C", "T"]:
-        tokens = [
-            "c.", str(idx_target), 
+        hgvs_tokens = [
+            "c.", str(idx_target+1),
+            str(seq[idx_target]), ">",
+            dna_bases[idx_base]
+        ]
+        mut_type_tokens = [
             str(Seq(seq[idx_target+1]).complement()), "[", 
             str(Seq(seq[idx_target]).complement()), ">", 
             str(Seq(dna_bases[idx_base]).complement()), "]",
             str(Seq(seq[idx_target-1]).complement())
         ]
-        description = "".join(tokens)
+        hgvs = "".join(hgvs_tokens)
+        mut_type = "".join(mut_type_tokens)
     else:
-        tokens = [
-            "c.", str(idx_target),
+        hgvs_tokens = [
+            "c.", str(idx_target+1),
+            str(seq[idx_target]), ">",
+            dna_bases[idx_base]
+        ]
+        mut_type_tokens = [
             str(seq[idx_target-1]), "[",
             str(seq[idx_target]), ">",
             dna_bases[idx_base], "]",
-            str(seq[idx_target+1])
+            str(seq[idx_target+1])    
         ]
-        description = "".join(tokens)
-
+        hgvs = "".join(hgvs_tokens)
+        mut_type = "".join(mut_type_tokens)
+        
     seq[idx_target] = dna_bases[idx_base]
 
     if data_type == "str":
-        return str(seq), idx_target, description, 0
+        return MutInfo(str(seq), idx_target, hgvs, mut_type, 0)
     elif data_type == "Seq":
-        return Seq(seq), idx_target, description, 0
+        return MutInfo(Seq(seq), idx_target, hgvs, mut_type, 0)
     elif data_type == "MutableSeq":
-        return seq, idx_target, description, 0
+        return MutInfo(seq, idx_target, hgvs, mut_type, 0)

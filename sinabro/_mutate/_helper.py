@@ -3,6 +3,23 @@ import re
 from Bio.Seq import Seq, MutableSeq
 from typing import Union
 
+
+class MutInfo:
+    def __init__(
+        self, 
+        new_seq: Union[str, Seq, MutableSeq], 
+        idx_target: int, 
+        hgvs: str,
+        mut_type: str,
+        e: int
+        ) -> None:
+        self.new_seq = new_seq
+        self.idx_target = idx_target
+        self.hgvs = hgvs
+        self.mut_type = mut_type
+        self.e = e
+
+
 def _get_target_of_mut_type(
     mut_type: str,
     ) -> str:
@@ -48,7 +65,7 @@ def _get_motif_indices(
         raise TypeError(
             "seq should be a string, Seq, or MutableSeq object"
         )
-    seq_target = get_target_of_mut_type(mut_type)
+    seq_target = _get_target_of_mut_type(mut_type)
     idx_motifs_obj = re.finditer(pattern=seq_target, string=seq)
     idx_motifs = [idx.start() for idx in idx_motifs_obj]
     
@@ -67,7 +84,7 @@ def _get_idx_target_from_idx_motif(
     idx_motif: int,
     mut_type: str
     ) -> int:
-    idx_target = idx_motif+get_idx_offset_of_mut_type(mut_type)
+    idx_target = idx_motif+_get_idx_offset_of_mut_type(mut_type)
 
     return idx_target
 
@@ -76,6 +93,6 @@ def _get_idx_motif_from_idx_target(
     idx_target: int,
     mut_type: str
     ) -> int:
-    idx_motif = idx_target-get_idx_offset_of_mut_type(mut_type)
+    idx_motif = idx_target-_get_idx_offset_of_mut_type(mut_type)
 
     return idx_motif
