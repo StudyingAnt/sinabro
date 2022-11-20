@@ -27,17 +27,11 @@ from _mutate._mutate_seq_with_mutational_signature import (
 
 from _mutate._helper import MutInfo
 
-
-def is_codon_synonymous(codon1, codon2):
-    codon_table = CodonTable.standard_dna_table.forward_table
-    codon_table["TAA"] = "-"
-    codon_table["TAG"] = "-"
-    codon_table["TGA"] = "-"
-    
-    if codon_table[codon1] == codon_table[codon2]:
-        return True
-    else:
-        return False
+from _autofill._helper import (
+    _is_codon_synonymous,
+    _get_codon,
+    _get_idx_from_hgvs
+)
 
     
 class Trajectory():    
@@ -63,7 +57,7 @@ class Trajectory():
     
     def show(self):
         print(f"Sequence\tHGVS\tMutation Type")
-        for i in range(self._length):
+        for i in range(self._length+1):
             line_tokens = [
                 str(self._data[i]),
                 self._hgvss[i],
@@ -90,17 +84,8 @@ class Trajectory():
 
         return self._data
         
-    def add_mutated_sequence(
-        self,
-        method: str = "random",
-        mut_type: str = None,
-        mutational_signature: str = None,
-        cosmic_version: float = 3.3,
-        genome_ref: str = "GRCh37",
-        custom_signature_path: str = None,
-        column: str = None,
-        strand_bias: float = 0.5
-    ) -> list:
+    def add_mutated_sequence(self, **kwargs) -> list:
+        method = kwargs["method"]
         if method == "random":
             last_seq = self._data[-1]
             mutinfo = random_single_substitution(
@@ -113,7 +98,10 @@ class Trajectory():
                             hgvs=mutinfo.hgvs, 
                             mut_type=mutinfo.mut_type)
                 self._length = self._length+1
+            else:
+                pass
         elif method == "mut_type":
+            mut_type = kwargs["mut_type"]
             last_seq = self._data[-1]
             mutinfo = mutate_seq_with_mut_type(
                 last_seq,
@@ -129,6 +117,28 @@ class Trajectory():
             else:
                 pass
         elif method == "signature":
+            mutational_signature = kwargs["mutational_signature"]
+            if "cosmic_version" in kwargs.keys():
+                cosmic_version = kwargs["cosmic_version"]
+            else:
+                cosmic_version = 3.3
+            if "genome_ref" in kwargs.keys():
+                genome_ref = kwargs["genome_ref"]
+            else:
+                genome_ref = "GRCh37"
+            if "custom_signature_path" in kwargs.keys():
+                custom_signature_path = kwargs["custom_signature_path"]
+            else:
+                custom_signature_path =None
+            if "column" in kwargs.keys():
+                column = kwargs["column"]
+            else:
+                column = None
+            if "strand_bias" in kwargs.keys():
+                strand_bias = kwargs["strand_bias"]
+            else:
+                strand_bias = 0.5
+
             last_seq = self._data[-1]
             mutinfo = mutate_seq_with_mutational_signature(
                 last_seq,
@@ -144,12 +154,57 @@ class Trajectory():
                             hgvs=mutinfo.hgvs, 
                             mut_type=mutinfo.mut_type)
                 self._length = self._length+1
+            else:
+                pass
         else:
             raise ValueError(
-                "mode must be either random, motif, or signature"
+                "method must be either random, motif, or signature"
             )
 
         return self._data
 
-    def autofill(self, codition="max_length", max_length=10, method=None, *kwargs):
-        
+    def autofill(
+        self, 
+        condition: str = "max_length", 
+        max_length: int = 10,  
+        **kwargs
+        ):
+        method = kwargs['method']
+        if condition == "max_length":
+            pass
+        elif condition == "nonsynonymous":
+            if method == "random":
+                last_seq = self._data[-1]
+                self.add_mutated_sequence(last_seq)
+            elif method == "mut_type":
+                last_seq = self._data[-1]
+                self.add_mutated_sequence(last_seq,
+                    method="mut_type",
+                    mut_type=mut_type
+                    )
+            elif method == "signature":
+                mutational_signature = kwargs["mutational_signature"]
+                
+                stop_flag = False
+                while not stop_flag:
+                    last_seq = self._data[-1]
+                    self.add_mutated_sequence(**kwargs)
+
+                    curr_seq = self._data[-1]
+                    prev_seq = self._data[-2]
+
+                    idx_target = _get_idx_from_hgvs(self._hgvss[-1])
+
+                    new_codon = _get_codon(curr_seq, idx_target)
+                    old_codon = _get_codon(prev_seq, idx_target)
+
+                    if new_codon == old_codon:
+                        pass
+                    else:
+                        stop_flag = True
+        else:
+            raise ValueError(
+                "condition must be either max_length or nonsynonymous"
+            )
+
+        return self._data
