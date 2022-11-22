@@ -6,3 +6,8 @@ Import Sinabro as:
 ```python
 import sinabro as snbr
 ```
+
+Initialize trajectory: you need to provide id(str) and data(str, Seq, MutableSeq)
+```python
+traj = snbr.Trajectory(id="Test", data="TATGCGTAAATGAT")
+```
