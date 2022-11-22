@@ -1,3 +1,4 @@
+import os
 import math
 
 import numpy as np
@@ -151,12 +152,14 @@ def mutate_seq_with_mutational_signature(
                 strand_bias=strand_bias
                 )
     elif mutational_signature in signatures:
+        dir_name = os.path.dirname(__file__)
         tokens = [
-            "../cosmic_signatures/COSMIC_v",
+            "../../cosmic_signatures/COSMIC_v",
             str(cosmic_version), ".1_SBS_",
             genome_ref, ".txt"
         ]
-        signature_file_path = "".join(tokens)
+        signature_file = "".join(tokens)
+        signature_file_path = os.path.join(dir_name, signature_file)
         full_mutational_signature = make_full_mutational_signature(
                 input_file_path=signature_file_path,
                 column=mutational_signature,

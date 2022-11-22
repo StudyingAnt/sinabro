@@ -15,19 +15,19 @@ from Bio.Data import CodonTable
 
 from typing import Union
 
-from _mutate._random_single_substitution import (
+from ._mutate._random_single_substitution import (
     random_single_substitution
 )
-from _mutate._mutate_seq_with_mut_type import (
+from ._mutate._mutate_seq_with_mut_type import (
     mutate_seq_with_mut_type
 )
-from _mutate._mutate_seq_with_mutational_signature import (
+from ._mutate._mutate_seq_with_mutational_signature import (
     mutate_seq_with_mutational_signature
 )
 
-from _mutate._helper import MutInfo
+from ._mutate._helper import MutInfo
 
-from _autofill._helper import (
+from ._autofill._helper import (
     _is_codon_synonymous,
     _get_codon,
     _get_idx_from_hgvs
@@ -35,7 +35,8 @@ from _autofill._helper import (
 
     
 class Trajectory():    
-    def __init__(self, data):
+    def __init__(self, id, data):
+        self._id = id
         self._data = []
         if data is None:
             raise ValueError("data must not be None")
@@ -55,16 +56,24 @@ class Trajectory():
         self._mut_types = ["."]
         self._length = 0
     
-    def show(self):
-        print(f"Sequence\tHGVS\tMutation Type")
-        for i in range(self._length+1):
-            line_tokens = [
-                str(self._data[i]),
-                self._hgvss[i],
-                self._mut_types[i] 
-            ]
-            line = "\t".join(line_tokens)
-            print(line)
+    def show(self, verbose= True):
+        #print(f"Sequence\tHGVS_mRNA\tHGVS_Protein\tMutation_Type")
+        print(f"ID: {self._id}")
+        print(f"Trajectory length: {self._length}")
+
+        if verbose:
+            print(f"")
+            print(f"Sequence\tHGVS_mRNA\tMutation_Type")
+            for i in range(self._length+1):
+                line_tokens = [
+                    str(self._data[i]),
+                    self._hgvss[i],
+                    self._mut_types[i] 
+                ]
+                line = "\t".join(line_tokens)
+                print(line)
+        else:
+            pass
 
     def append(self, seq, hgvs="", mut_type=""):
         if seq is None:
@@ -81,6 +90,14 @@ class Trajectory():
             )
         self._hgvss.append(hgvs)
         self._mut_types.append(mut_type)
+
+        return self._data
+
+    def pop(self):
+        last_seq = self._data.pop()
+        last_hgvs = self._hgvss.pop()
+        last_mut_type = self._mut_types.pop()
+        self._length = self._length-1
 
         return self._data
         
@@ -170,13 +187,13 @@ class Trajectory():
         **kwargs
         ):
         method = kwargs['method']
-        if condition == "max_length":
+        if condition == "max_length": # have to write
             pass
-        elif condition == "nonsynonymous":
-            if method == "random":
+        elif condition == "nonsynonymous": 
+            if method == "random": # have to write
                 last_seq = self._data[-1]
                 self.add_mutated_sequence(last_seq)
-            elif method == "mut_type":
+            elif method == "mut_type": #have to write
                 last_seq = self._data[-1]
                 self.add_mutated_sequence(last_seq,
                     method="mut_type",
@@ -202,9 +219,39 @@ class Trajectory():
                         pass
                     else:
                         stop_flag = True
+            else:
+                raise ValueError(
+                    "condition must be either max_length or nonsynonymous"
+                )
         else:
             raise ValueError(
                 "condition must be either max_length or nonsynonymous"
             )
 
         return self._data
+
+    def save(self, output_dir_path, prefix=None, suffix=None):
+        records = []
+        for i in range(self._length+1):
+            description = f"{self._hgvss[i]};{self._mut_types[i]}"
+            if isinstance(self._data[i], str):
+                seq = Seq(self._data[i])
+            else:
+                seq = self._data[i]
+            record = SeqRecord(seq, id=self._id, description=description)
+            records.append(record)
+
+        if prefix:
+            prefix = f"{prefix}_"
+        else:
+            prefix = ""
+
+        if suffix:
+            suffix = f"_{suffix}"
+        else:
+            suffix = ""
+
+        file_name = f"{prefix}trajectory{suffix}.fa"
+        output_path = os.path.join(output_dir_path, file_name)
+
+        SeqIO.write(records, output_path, "fasta")

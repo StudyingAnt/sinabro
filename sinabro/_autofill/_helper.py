@@ -7,9 +7,9 @@ from Bio.Seq import Seq, MutableSeq
 
 def _is_codon_synonymous(codon1, codon2):
     codon_table = CodonTable.standard_dna_table.forward_table
-    codon_table["TAA"] = "-"
-    codon_table["TAG"] = "-"
-    codon_table["TGA"] = "-"
+    codon_table["TAA"] = "*"
+    codon_table["TAG"] = "*"
+    codon_table["TGA"] = "*"
     
     if codon_table[codon1] == codon_table[codon2]:
         return True
