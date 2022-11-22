@@ -25,12 +25,13 @@ from ._mutate._mutate_seq_with_mutational_signature import (
     mutate_seq_with_mutational_signature
 )
 
-from ._mutate._helper import MutInfo
-
-from ._autofill._helper import (
+from ._helper._helper import (
+    MutInfo,
     _is_codon_synonymous,
     _get_codon,
-    _get_idx_from_hgvs
+    _get_pos_aa,
+    _get_idx_from_hgvs_mrna,
+    _get_amino_acid_from_codon
 )
 
     
@@ -52,7 +53,8 @@ class Trajectory():
             )
         self._data.append(self._original_seq)
         self._seq_length = len(self._original_seq)
-        self._hgvss = ["."]
+        self._hgvs_mrnas = ["."]
+        self._hgvs_aa = ["."]
         self._mut_types = ["."]
         self._length = 0
     
@@ -63,11 +65,13 @@ class Trajectory():
 
         if verbose:
             print(f"")
-            print(f"Sequence\tHGVS_mRNA\tMutation_Type")
+            print(f"Sequence\tHGVS_mRNA\tHGVS_Protein\tMutation_Type")
+            #print(f"Sequence\tHGVS_mRNA\tMutation_Type")
             for i in range(self._length+1):
                 line_tokens = [
                     str(self._data[i]),
-                    self._hgvss[i],
+                    self._hgvs_mrnas[i],
+                    self._hgvs_aa[i],
                     self._mut_types[i] 
                 ]
                 line = "\t".join(line_tokens)
@@ -75,7 +79,7 @@ class Trajectory():
         else:
             pass
 
-    def append(self, seq, hgvs="", mut_type=""):
+    def append(self, seq, hgvs_mrna="", mut_type=""):
         if seq is None:
             raise ValueError("seq must not be None")
         elif isinstance(seq, str):
@@ -88,14 +92,15 @@ class Trajectory():
             raise TypeError(
                 "data should be a string, Seq, or MutableSeq object"
             )
-        self._hgvss.append(hgvs)
+        self._hgvs_mrnas.append(hgvs_mrna)
         self._mut_types.append(mut_type)
 
         return self._data
 
     def pop(self):
         last_seq = self._data.pop()
-        last_hgvs = self._hgvss.pop()
+        last_hgvs_mrna = self._hgvs_mrnas.pop()
+        last_hgvs_aa = self._hgvs_aa.pop()
         last_mut_type = self._mut_types.pop()
         self._length = self._length-1
 
@@ -112,7 +117,7 @@ class Trajectory():
                 )
             if not mutinfo.e:
                 self.append(mutinfo.new_seq, 
-                            hgvs=mutinfo.hgvs, 
+                            hgvs_mrna=mutinfo.hgvs_mrna, 
                             mut_type=mutinfo.mut_type)
                 self._length = self._length+1
             else:
@@ -168,7 +173,7 @@ class Trajectory():
             )
             if not mutinfo.e:
                 self.append(mutinfo.new_seq, 
-                            hgvs=mutinfo.hgvs, 
+                            hgvs_mrna=mutinfo.hgvs_mrna, 
                             mut_type=mutinfo.mut_type)
                 self._length = self._length+1
             else:
@@ -210,14 +215,20 @@ class Trajectory():
                     curr_seq = self._data[-1]
                     prev_seq = self._data[-2]
 
-                    idx_target = _get_idx_from_hgvs(self._hgvss[-1])
+                    idx_target = _get_idx_from_hgvs_mrna(self._hgvs_mrnas[-1])
 
                     new_codon = _get_codon(curr_seq, idx_target)
                     old_codon = _get_codon(prev_seq, idx_target)
-
-                    if new_codon == old_codon:
-                        pass
+                    
+                    if _is_codon_synonymous(new_codon, old_codon):
+                        self._hgvs_aa.append(".")
                     else:
+                        pos_aa = _get_pos_aa(idx_target)
+
+                        new_aa = _get_amino_acid_from_codon(new_codon, three=True)
+                        old_aa = _get_amino_acid_from_codon(old_codon, three=True)
+
+                        self._hgvs_aa.append(f"p.{pos_aa}{old_aa}>{new_aa}")
                         stop_flag = True
             else:
                 raise ValueError(
@@ -233,7 +244,7 @@ class Trajectory():
     def save(self, output_dir_path, prefix=None, suffix=None):
         records = []
         for i in range(self._length+1):
-            description = f"{self._hgvss[i]};{self._mut_types[i]}"
+            description = f"{self._hgvs_mrnas[i]};{self._hgvs_aa[i]};{self._mut_types[i]}"
             if isinstance(self._data[i], str):
                 seq = Seq(self._data[i])
             else:

@@ -3,7 +3,7 @@ import numpy as np
 from Bio.Seq import Seq, MutableSeq
 from typing import Union
 
-from ._helper import (
+from .._helper._helper import (
     MutInfo,
     _get_target_of_mut_type,
     _get_result_of_mut_type,
@@ -62,11 +62,11 @@ def mutate_seq_with_mut_type(seq, mut_type, start=None, end=None):
     seq[idx_motif:idx_target+1] = _get_result_of_mut_type(mut_type)
     nt_after = seq[idx_target:idx_target+1]
     
-    hgvs = f"c.{str(idx_target)}{nt_before}>{nt_after}"
+    hgvs_mrna = f"c.{str(idx_target)}{nt_before}>{nt_after}"
 
     if data_type == "str":
-        return MutInfo(str(seq), idx_target, hgvs, mut_type, 0)
+        return MutInfo(str(seq), idx_target, hgvs_mrna, mut_type, 0)
     elif data_type == "Seq":
-        return MutInfo(Seq(seq), idx_target, hgvs, mut_type, 0)
+        return MutInfo(Seq(seq), idx_target, hgvs_mrna, mut_type, 0)
     elif data_type == "MutableSeq":
-        return MutInfo(seq, idx_target, hgvs, mut_type, 0)
+        return MutInfo(seq, idx_target, hgvs_mrna, mut_type, 0)

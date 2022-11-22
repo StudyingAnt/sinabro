@@ -7,7 +7,7 @@ import pandas as pd
 from Bio.Seq import Seq, MutableSeq
 from typing import Union
 
-from ._helper import (
+from .._helper._helper import (
     MutInfo,
     _get_target_of_mut_type,
     _get_result_of_mut_type,
@@ -180,7 +180,7 @@ def mutate_seq_with_mutational_signature(
     idx_target = math.floor(idx_flat/4)
 
     if str(seq[idx_target]) not in ["C", "T"]:
-        hgvs_tokens = [
+        hgvs_mrna_tokens = [
             "c.", str(idx_target+1),
             str(seq[idx_target]), ">",
             dna_bases[idx_base]
@@ -191,10 +191,10 @@ def mutate_seq_with_mutational_signature(
             str(Seq(dna_bases[idx_base]).complement()), "]",
             str(Seq(seq[idx_target-1]).complement())
         ]
-        hgvs = "".join(hgvs_tokens)
+        hgvs_mrna = "".join(hgvs_mrna_tokens)
         mut_type = "".join(mut_type_tokens)
     else:
-        hgvs_tokens = [
+        hgvs_mrna_tokens = [
             "c.", str(idx_target+1),
             str(seq[idx_target]), ">",
             dna_bases[idx_base]
@@ -205,14 +205,14 @@ def mutate_seq_with_mutational_signature(
             dna_bases[idx_base], "]",
             str(seq[idx_target+1])    
         ]
-        hgvs = "".join(hgvs_tokens)
+        hgvs_mrna = "".join(hgvs_mrna_tokens)
         mut_type = "".join(mut_type_tokens)
         
     seq[idx_target] = dna_bases[idx_base]
 
     if data_type == "str":
-        return MutInfo(str(seq), idx_target, hgvs, mut_type, 0)
+        return MutInfo(str(seq), idx_target, hgvs_mrna, mut_type, 0)
     elif data_type == "Seq":
-        return MutInfo(Seq(seq), idx_target, hgvs, mut_type, 0)
+        return MutInfo(Seq(seq), idx_target, hgvs_mrna, mut_type, 0)
     elif data_type == "MutableSeq":
-        return MutInfo(seq, idx_target, hgvs, mut_type, 0)
+        return MutInfo(seq, idx_target, hgvs_mrna, mut_type, 0)

@@ -1,21 +1,23 @@
 import re
+import math
 
 from Bio.Seq import Seq, MutableSeq
-from typing import Union
+from Bio.Data import CodonTable
 
+from typing import Union
 
 class MutInfo:
     def __init__(
         self, 
         new_seq: Union[str, Seq, MutableSeq], 
         idx_target: int, 
-        hgvs: str,
+        hgvs_mrna: str,
         mut_type: str,
         e: int
         ) -> None:
         self.new_seq = new_seq
         self.idx_target = idx_target
-        self.hgvs = hgvs
+        self.hgvs_mrna = hgvs_mrna
         self.mut_type = mut_type
         self.e = e
 
@@ -96,3 +98,74 @@ def _get_idx_motif_from_idx_target(
     idx_motif = idx_target-_get_idx_offset_of_mut_type(mut_type)
 
     return idx_motif
+
+
+def _is_codon_synonymous(codon1, codon2):
+    codon_table = CodonTable.standard_dna_table.forward_table
+    codon_table["TAA"] = "*"
+    codon_table["TAG"] = "*"
+    codon_table["TGA"] = "*"
+    
+    if codon_table[codon1] == codon_table[codon2]:
+        #print(f"{codon_table[codon1]}\t{codon_table[codon2]}")
+        return True
+    else:
+        #print(f"{codon_table[codon1]}\t{codon_table[codon2]}")
+        return False
+
+
+def _get_idx_codon(idx_target):
+    idx_codon = int(math.floor((idx_target-1)/3)*3+1)
+
+    return idx_codon
+
+
+def _get_pos_aa(idx_target):
+    pos_aa = int(math.floor((idx_target-1)/3)+1)
+
+    return pos_aa
+
+
+def _get_codon(seq, idx_target):
+    if isinstance(seq, str):
+        pass
+    elif isinstance(seq, Seq):
+        seq = str(seq)
+    elif isinstance(seq, MutableSeq):
+        seq = str(seq)
+    else:
+        raise TypeError(
+            "seq should be a string, Seq, or MutableSeq object"
+        )
+
+    idx_codon = _get_idx_codon(idx_target)
+
+    codon = seq[idx_codon:idx_codon+3]
+
+    return codon
+
+
+def _get_idx_from_hgvs_mrna(hgvs_mrna):
+    changed_symbol_pos = re.search(">", hgvs_mrna).start()
+
+    return int(hgvs_mrna[2:changed_symbol_pos-1])-1
+
+
+def _get_amino_acid_from_codon(codon, three=False):
+    codon_table = CodonTable.standard_dna_table.forward_table
+    codon_table["TAA"] = "*"
+    codon_table["TAG"] = "*"
+    codon_table["TGA"] = "*"
+
+    one_to_three = {
+        "A": "Ala", "R": "Arg", "N": "Asn", "D": "Asp", "C": "Cys",
+        "E": "Glu", "Q": "Gln", "G": "Gly", "H": "His", "I": "Ile",
+        "L": "Leu", "K": "Lys", "M": "Met", "F": "Phe", "P": "Pro",
+        "S": "Ser", "T": "Thr", "W": "Trp", "Y": "Tyr", "V": "Val",
+        "*": "*"
+    }
+
+    if three:
+        return one_to_three[codon_table[codon]] 
+    else:
+        return codon_table[codon]
