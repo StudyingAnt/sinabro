@@ -36,7 +36,7 @@ from ._helper._helper import (
 
     
 class Trajectory():    
-    def __init__(self, id, data):
+    def __init__(self, id, data, note="."):
         self._id = id
         self._data = []
         if data is None:
@@ -56,6 +56,7 @@ class Trajectory():
         self._hgvs_mrnas = ["."]
         self._hgvs_aa = ["."]
         self._mut_types = ["."]
+        self._notes = [note]        
         self._length = 0
     
     def show(self, verbose= True):
@@ -79,7 +80,7 @@ class Trajectory():
         else:
             pass
 
-    def append(self, seq, hgvs_mrna="", mut_type=""):
+    def append(self, seq, hgvs_mrna=".", mut_type=".", note="."):
         if seq is None:
             raise ValueError("seq must not be None")
         elif isinstance(seq, str):
@@ -94,6 +95,7 @@ class Trajectory():
             )
         self._hgvs_mrnas.append(hgvs_mrna)
         self._mut_types.append(mut_type)
+        self._notes.append(note)
 
         return self._data
 
