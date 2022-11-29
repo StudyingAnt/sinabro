@@ -59,24 +59,36 @@ class Trajectory():
         self._notes = [note]        
         self._length = 0
     
-    def show(self, verbose= True):
-        #print(f"Sequence\tHGVS_mRNA\tHGVS_Protein\tMutation_Type")
+    def show(self, verbose= True, noseq=False):
         print(f"ID: {self._id}")
         print(f"Trajectory length: {self._length}")
 
         if verbose:
-            print(f"")
-            print(f"Sequence\tHGVS_mRNA\tHGVS_Protein\tMutation_Type")
-            #print(f"Sequence\tHGVS_mRNA\tMutation_Type")
-            for i in range(self._length+1):
-                line_tokens = [
-                    str(self._data[i]),
-                    self._hgvs_mrnas[i],
-                    self._hgvs_aa[i],
-                    self._mut_types[i] 
-                ]
-                line = "\t".join(line_tokens)
-                print(line)
+            if noseq:
+                print(f"")
+                print(f"HGVS_mRNA\tHGVS_Protein\tMutation_Type\tNote")
+                for i in range(self._length+1):
+                    line_tokens = [
+                        self._hgvs_mrnas[i],
+                        self._hgvs_aa[i],
+                        self._mut_types[i],
+                        self._notes[i] 
+                    ]
+                    line = "\t".join(line_tokens)
+                    print(line)
+            else:
+                print(f"")
+                print(f"Sequence\tHGVS_mRNA\tHGVS_Protein\tMutation_Type\tNote")
+                for i in range(self._length+1):
+                    line_tokens = [
+                        str(self._data[i]),
+                        self._hgvs_mrnas[i],
+                        self._hgvs_aa[i],
+                        self._mut_types[i],
+                        self._notes[i] 
+                    ]
+                    line = "\t".join(line_tokens)
+                    print(line)
         else:
             pass
 
@@ -104,6 +116,7 @@ class Trajectory():
         last_hgvs_mrna = self._hgvs_mrnas.pop()
         last_hgvs_aa = self._hgvs_aa.pop()
         last_mut_type = self._mut_types.pop()
+        last_note = self._notes.pop()
         self._length = self._length-1
 
         return self._data
@@ -162,6 +175,10 @@ class Trajectory():
                 strand_bias = kwargs["strand_bias"]
             else:
                 strand_bias = 0.5
+            if "note" in kwargs.keys():
+                note = kwargs["note"]
+            else:
+                note = "."
 
             last_seq = self._data[-1]
             mutinfo = mutate_seq_with_mutational_signature(
@@ -176,7 +193,8 @@ class Trajectory():
             if not mutinfo.e:
                 self.append(mutinfo.new_seq, 
                             hgvs_mrna=mutinfo.hgvs_mrna, 
-                            mut_type=mutinfo.mut_type)
+                            mut_type=mutinfo.mut_type,
+                            note=note)
                 self._length = self._length+1
             else:
                 pass
@@ -246,7 +264,14 @@ class Trajectory():
     def save(self, output_dir_path, prefix=None, suffix=None):
         records = []
         for i in range(self._length+1):
-            description = f"{self._hgvs_mrnas[i]};{self._hgvs_aa[i]};{self._mut_types[i]}"
+            desc_tokens = [
+                self._hgvs_mrnas[i], 
+                self._hgvs_aa[i],
+                self._mut_types[i],
+                self._notes[i]
+            ]
+
+            description = ";".join(desc_tokens)
             if isinstance(self._data[i], str):
                 seq = Seq(self._data[i])
             else:
