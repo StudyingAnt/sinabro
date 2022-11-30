@@ -78,7 +78,15 @@ class Trajectory():
                     print(line)
             else:
                 print(f"")
-                print(f"Sequence\tHGVS_mRNA\tHGVS_Protein\tMutation_Type\tNote")
+                header_tokens = [
+                    "Sequence",
+                    "HGVS_mRNA",
+                    "HGVS_Protein",
+                    "Mutation_Type",
+                    "Note"
+                ]
+                header = "\t".join(header_tokens)
+                print(header)
                 for i in range(self._length+1):
                     line_tokens = [
                         str(self._data[i]),
@@ -124,6 +132,10 @@ class Trajectory():
     def add_mutated_sequence(self, **kwargs) -> list:
         method = kwargs["method"]
         if method == "random":
+            if "note" in kwargs.keys():
+                note = kwargs["note"]
+            else:
+                note = "."
             last_seq = self._data[-1]
             mutinfo = random_single_substitution(
                 last_seq,
@@ -133,12 +145,17 @@ class Trajectory():
             if not mutinfo.e:
                 self.append(mutinfo.new_seq, 
                             hgvs_mrna=mutinfo.hgvs_mrna, 
-                            mut_type=mutinfo.mut_type)
+                            mut_type=mutinfo.mut_type,
+                            note=note)
                 self._length = self._length+1
             else:
                 pass
         elif method == "mut_type":
             mut_type = kwargs["mut_type"]
+            if "note" in kwargs.keys():
+                note = kwargs["note"]
+            else:
+                note = "."
             last_seq = self._data[-1]
             mutinfo = mutate_seq_with_mut_type(
                 last_seq,
@@ -148,8 +165,9 @@ class Trajectory():
                 )
             if not mutinfo.e:
                 self.append(mutinfo.new_seq, 
-                            hgvs=mutinfo.hgvs, 
-                            mut_type=mutinfo.mut_type)
+                            hgvs_mrna=mutinfo.hgvs_mrna, 
+                            mut_type=mutinfo.mut_type,
+                            note=note)
                 self._length = self._length+1
             else:
                 pass
@@ -212,48 +230,72 @@ class Trajectory():
         **kwargs
         ):
         method = kwargs['method']
-        if condition == "max_length": # have to write
-            pass
-        elif condition == "nonsynonymous": 
-            if method == "random": # have to write
+        if condition == "max_length":
+            for _ in range(max_length):
                 last_seq = self._data[-1]
-                self.add_mutated_sequence(last_seq)
-            elif method == "mut_type": #have to write
-                last_seq = self._data[-1]
-                self.add_mutated_sequence(last_seq,
-                    method="mut_type",
-                    mut_type=mut_type
+                self.add_mutated_sequence(**kwargs)
+
+                curr_seq = self._data[-1]
+                prev_seq = self._data[-2]
+
+                idx_target = _get_idx_from_hgvs_mrna(
+                    self._hgvs_mrnas[-1], 
+                    offset=1
                     )
-            elif method == "signature":
-                mutational_signature = kwargs["mutational_signature"]
-                
-                stop_flag = False
-                while not stop_flag:
-                    last_seq = self._data[-1]
-                    self.add_mutated_sequence(**kwargs)
 
-                    curr_seq = self._data[-1]
-                    prev_seq = self._data[-2]
-
-                    idx_target = _get_idx_from_hgvs_mrna(self._hgvs_mrnas[-1])
-
-                    new_codon = _get_codon(curr_seq, idx_target)
-                    old_codon = _get_codon(prev_seq, idx_target)
+                new_codon = _get_codon(curr_seq, idx_target)
+                old_codon = _get_codon(prev_seq, idx_target)
+                print(idx_target)
+                print(new_codon)
+                print(old_codon)
                     
-                    if _is_codon_synonymous(new_codon, old_codon):
-                        self._hgvs_aa.append(".")
-                    else:
-                        pos_aa = _get_pos_aa(idx_target)
+                if _is_codon_synonymous(new_codon, old_codon):
+                    self._hgvs_aa.append(".")
+                else:
+                    pos_aa = _get_pos_aa(idx_target)
 
-                        new_aa = _get_amino_acid_from_codon(new_codon, three=True)
-                        old_aa = _get_amino_acid_from_codon(old_codon, three=True)
+                    new_aa = _get_amino_acid_from_codon(new_codon, three=True)
+                    old_aa = _get_amino_acid_from_codon(old_codon, three=True)
 
-                        self._hgvs_aa.append(f"p.{pos_aa}{old_aa}>{new_aa}")
-                        stop_flag = True
+                    self._hgvs_aa.append(f"p.{pos_aa}{old_aa}>{new_aa}")
+
+        elif condition == "nonsynonymous": 
+            if method == "random": 
+                pass
+            elif method == "mut_type": 
+                pass
+            elif method == "signature":
+                pass
             else:
                 raise ValueError(
                     "condition must be either max_length or nonsynonymous"
                 )
+            stop_flag = False
+            while not stop_flag:
+                last_seq = self._data[-1]
+                self.add_mutated_sequence(**kwargs)
+
+                curr_seq = self._data[-1]
+                prev_seq = self._data[-2]
+
+                idx_target = _get_idx_from_hgvs_mrna(
+                    self._hgvs_mrnas[-1], 
+                    offset=1
+                    )
+
+                new_codon = _get_codon(curr_seq, idx_target)
+                old_codon = _get_codon(prev_seq, idx_target)
+                    
+                if _is_codon_synonymous(new_codon, old_codon):
+                    self._hgvs_aa.append(".")
+                else:
+                    pos_aa = _get_pos_aa(idx_target)
+
+                    new_aa = _get_amino_acid_from_codon(new_codon, three=True)
+                    old_aa = _get_amino_acid_from_codon(old_codon, three=True)
+
+                    self._hgvs_aa.append(f"p.{pos_aa}{old_aa}>{new_aa}")
+                    stop_flag = True
         else:
             raise ValueError(
                 "condition must be either max_length or nonsynonymous"

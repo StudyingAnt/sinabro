@@ -145,10 +145,10 @@ def _get_codon(seq, idx_target):
     return codon
 
 
-def _get_idx_from_hgvs_mrna(hgvs_mrna):
+def _get_idx_from_hgvs_mrna(hgvs_mrna, offset=0):
     changed_symbol_pos = re.search(">", hgvs_mrna).start()
 
-    return int(hgvs_mrna[2:changed_symbol_pos-1])-1
+    return int(hgvs_mrna[2:changed_symbol_pos-1])-1+offset
 
 
 def _get_amino_acid_from_codon(codon, three=False):

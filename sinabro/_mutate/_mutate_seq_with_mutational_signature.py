@@ -181,7 +181,7 @@ def mutate_seq_with_mutational_signature(
 
     if str(seq[idx_target]) not in ["C", "T"]:
         hgvs_mrna_tokens = [
-            "c.", str(idx_target+1),
+            "c.", str(idx_target),
             str(seq[idx_target]), ">",
             dna_bases[idx_base]
         ]
@@ -195,7 +195,7 @@ def mutate_seq_with_mutational_signature(
         mut_type = "".join(mut_type_tokens)
     else:
         hgvs_mrna_tokens = [
-            "c.", str(idx_target+1),
+            "c.", str(idx_target),
             str(seq[idx_target]), ">",
             dna_bases[idx_base]
         ]

@@ -129,5 +129,5 @@ dmypy.json
 .pyre/
 
 # Test file
-/sinabro/test.py
-/sinabro/test.py~
+#/sinabro/test.py
+#/sinabro/test.py~
