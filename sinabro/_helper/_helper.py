@@ -95,10 +95,7 @@ def _get_idx_target_from_idx_motif(
 
 def _get_idx_motif_from_idx_target(
     idx_target: int,
-    mut_type: str
-    ) -> int:
-    idx_motif = idx_target-_get_idx_offset_of_mut_type(mut_type)
-
+    mut_type: strsys.path.insert(0, "/home/augustine/Desktop/Labs/0_Dry/projSETA/sinabro")
     return idx_motif
 
 
