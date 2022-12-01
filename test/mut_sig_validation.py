@@ -51,10 +51,10 @@ def simulation(signature):
             for nt2 in ["A", "C", "G", "T"]:
                 mut_type_cnts[f"{nt1}{mut}{nt2}"] = 0
 
-    n_sims = 50000
-    for run in range(1,6,1):
-        for length in range(500, 7500, 500):
-            for gc in [0.35, 0.40, 0.45, 0.50, 0.55, 0.60]:
+    n_sims = 10000
+    for run in [1, 2, 3]:
+        for length in [300, 2200, 7000]:
+            for gc in [0.3, 0.4, 0.5, 0.6]:
                 for i in range(n_sims):
                     seq = generate_random_sequence(length, gc=gc)
                     mutinfo = mutate_seq_with_mutational_signature(seq, start=0, end=len(seq)-1, mutational_signature=signature)
@@ -69,7 +69,7 @@ def simulation(signature):
                     }
                 )
 
-                data.to_csv(f"/home/jhsong/sinabro_validation/{signature}_length_{str(length)}_gc_{str(gc)}_sim_{run}.csv", index=False)
+                data.to_csv(f"/home/jhsong/sinabro_validation/run_{run}/{signature.lower()}/{signature}_length_{str(length)}_gc_{str(gc)}_sim_{run}.csv", index=False)
 
 with mp.Pool(processes=4) as pool:
     pool.map(simulation, signatures)
