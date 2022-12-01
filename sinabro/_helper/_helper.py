@@ -1,6 +1,8 @@
 import re
 import math
 
+import numpy as np
+
 from Bio.Seq import Seq, MutableSeq
 from Bio.Data import CodonTable
 
@@ -169,3 +171,17 @@ def _get_amino_acid_from_codon(codon, three=False):
         return one_to_three[codon_table[codon]] 
     else:
         return codon_table[codon]
+
+
+def generate_random_sequence(length, gc=0.5):
+    dna = ["A", "C", "G", "T"]
+    seq = Seq("".join(
+        np.random.choice(
+            dna, 
+            length, 
+            p=0.5*np.array([1-gc, gc, gc, 1-gc])
+            )
+        )
+    )
+    
+    return seq

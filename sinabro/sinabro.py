@@ -59,7 +59,7 @@ class Trajectory():
         self._notes = [note]        
         self._length = 0
     
-    def show(self, verbose= True, noseq=False):
+    def show(self, verbose= True, noseq=False, show_idx=False):
         print(f"ID: {self._id}")
         print(f"Trajectory length: {self._length}")
 
@@ -77,26 +77,45 @@ class Trajectory():
                     line = "\t".join(line_tokens)
                     print(line)
             else:
-                print(f"")
-                header_tokens = [
-                    "Sequence",
-                    "HGVS_mRNA",
-                    "HGVS_Protein",
-                    "Mutation_Type",
-                    "Note"
-                ]
-                header = "\t".join(header_tokens)
-                print(header)
-                for i in range(self._length+1):
-                    line_tokens = [
-                        str(self._data[i]),
-                        self._hgvs_mrnas[i],
-                        self._hgvs_aa[i],
-                        self._mut_types[i],
-                        self._notes[i] 
+                if self._seq_length > 35:
+                    pass
+                else:
+                    sp1 = " "*(self._seq_length-5)
+                    sp2 = " "*int(math.floor((self._seq_length-2)/10))
+                    sp3 = " "*int(math.floor(((self._seq_length-2)/3)/10)+2)
+                    sp4 = "   "
+
+                    print(f"")
+                    header_tokens = [
+                        "Sequence", sp1,
+                        "HGVS_mRNA", sp2,
+                        "HGVS_Protein", sp3,
+                        "Mutation_Type", sp4,
+                        "Note"
                     ]
-                    line = "\t".join(line_tokens)
-                    print(line)
+                    header = "".join(header_tokens)
+                    print(header)
+                    if show_idx:
+                        idx_line_1 = "+123456789_123456789_123456789_123+"
+                        idx_line_2 = "+1__2__3__4__5__6__7__8__9__0__1__+"
+                        print(idx_line_1[0:self._seq_length])
+                        print(idx_line_2[0:self._seq_length])
+                    else:
+                        pass
+                    for i in range(self._length+1):
+                        sp1 = "   "
+                        sp2 = " "*(12-len(self._hgvs_mrnas[i]))
+                        sp3 = " "*(15-len(self._hgvs_aa[i]))
+                        sp4 = " "*(16-len(self._mut_types[i]))
+                        line_tokens = [
+                            str(self._data[i]), sp1,
+                            self._hgvs_mrnas[i], sp2,
+                            self._hgvs_aa[i], sp3,
+                            self._mut_types[i], sp4,
+                            self._notes[i] 
+                        ]
+                        line = "".join(line_tokens)
+                        print(line)
         else:
             pass
 
@@ -244,10 +263,7 @@ class Trajectory():
                     )
 
                 new_codon = _get_codon(curr_seq, idx_target)
-                old_codon = _get_codon(prev_seq, idx_target)
-                print(idx_target)
-                print(new_codon)
-                print(old_codon)
+                old_codon = _get_codon(prev_seq, idx_target)              
                     
                 if _is_codon_synonymous(new_codon, old_codon):
                     self._hgvs_aa.append(".")
@@ -285,7 +301,7 @@ class Trajectory():
 
                 new_codon = _get_codon(curr_seq, idx_target)
                 old_codon = _get_codon(prev_seq, idx_target)
-                    
+ 
                 if _is_codon_synonymous(new_codon, old_codon):
                     self._hgvs_aa.append(".")
                 else:
