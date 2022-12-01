@@ -51,24 +51,25 @@ def simulation(signature):
             for nt2 in ["A", "C", "G", "T"]:
                 mut_type_cnts[f"{nt1}{mut}{nt2}"] = 0
 
-    length = 2200
-    n_sims = 10
+    n_sims = 50000
+    for run in range(1,6,1):
+        for length in range(500, 7500, 500):
+            for gc in [0.35, 0.40, 0.45, 0.50, 0.55, 0.60]:
+                for i in range(n_sims):
+                    seq = generate_random_sequence(length, gc=gc)
+                    mutinfo = mutate_seq_with_mutational_signature(seq, start=0, end=len(seq)-1, mutational_signature=signature)
+                    mut_type_cnts[mutinfo.mut_type] = mut_type_cnts[mutinfo.mut_type]+1
 
-    for i in range(n_sims):
-        seq = generate_random_sequence(length, gc=0.41)
-        mutinfo = mutate_seq_with_mutational_signature(seq, start=0, end=len(seq)-1, mutational_signature=signature)
-        mut_type_cnts[mutinfo.mut_type] = mut_type_cnts[mutinfo.mut_type]+1
+                rlt = {key: value/n_sims for key, value in mut_type_cnts.items()}
 
-    rlt = {key: value/n_sims for key, value in mut_type_cnts.items()}
+                data = pd.DataFrame(
+                    {
+                        "mut_type": rlt.keys(),
+                        "simulation": rlt.values()
+                    }
+                )
 
-    data = pd.DataFrame(
-        {
-            "mut_type": rlt.keys(),
-            "simulation": rlt.values()
-        }
-    )
-
-    data.to_csv(f"/home/jhsong/sinabro_validation/{signature}_sim.csv", index=False)
+                data.to_csv(f"/home/jhsong/sinabro_validation/{signature}_length_{str(length)}_gc_{str(gc)}_sim_{run}.csv", index=False)
 
 with mp.Pool(processes=4) as pool:
     pool.map(simulation, signatures)
