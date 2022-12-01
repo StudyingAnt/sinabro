@@ -95,7 +95,10 @@ def _get_idx_target_from_idx_motif(
 
 def _get_idx_motif_from_idx_target(
     idx_target: int,
-    mut_type: strsys.path.insert(0, "/home/augustine/Desktop/Labs/0_Dry/projSETA/sinabro")
+    mut_type: str
+    ) -> int:
+    idx_motif = idx_target-_get_idx_offset_of_mut_type(mut_type)
+
     return idx_motif
 
 
@@ -106,10 +109,8 @@ def _is_codon_synonymous(codon1, codon2):
     codon_table["TGA"] = "*"
     
     if codon_table[codon1] == codon_table[codon2]:
-        #print(f"{codon_table[codon1]}\t{codon_table[codon2]}")
         return True
     else:
-        #print(f"{codon_table[codon1]}\t{codon_table[codon2]}")
         return False
 
 
