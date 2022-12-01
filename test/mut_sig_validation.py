@@ -9,7 +9,7 @@ import multiprocessing as mp
 from Bio.Seq import Seq, MutableSeq
 from typing import Union
 
-sys.path.insert(0, "/home/augustine/Desktop/Labs/0_Dry/projSETA/sinabro")
+sys.path.insert(0, "/home/jhsong/sinabro")
 from sinabro._helper._helper import (
     MutInfo,
     _get_target_of_mut_type,
@@ -52,7 +52,7 @@ def simulation(signature):
                 mut_type_cnts[f"{nt1}{mut}{nt2}"] = 0
 
     length = 2200
-    n_sims = 100
+    n_sims = 10
 
     for i in range(n_sims):
         seq = generate_random_sequence(length, gc=0.41)
@@ -68,8 +68,8 @@ def simulation(signature):
         }
     )
 
-    data.to_csv(f"/home/augustine/Desktop/Labs/0_Dry/projSETA/{signature}_sim.csv", index=False)
+    data.to_csv(f"/home/jhsong/sinabro_validation/{signature}_sim.csv", index=False)
 
-with mp.Pool(processes=10) as pool:
+with mp.Pool(processes=4) as pool:
     pool.map(simulation, signatures)
 
