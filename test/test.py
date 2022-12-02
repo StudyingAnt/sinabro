@@ -13,6 +13,48 @@ from pathlib import Path, PurePath
 # c.  -1123456789112345678921234567893123+1  
 seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
 
+# 
+seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
+traj = snbr.Trajectory(id="Test", data=seq)
+traj.autofill(condition="max_length", method="random")
+traj.show()
+
+# 
+seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
+traj = snbr.Trajectory(id="Test", data=seq)
+traj.autofill(condition="max_length", method="mut_type", mut_type="T[C>T]")
+traj.show()
+
+# 
+seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
+traj = snbr.Trajectory(id="Test", data=seq)
+traj.autofill(condition="max_length", method="signature", mutational_signature="SBS2")
+traj.show()
+
+# 
+seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
+traj = snbr.Trajectory(id="Test", data=seq)
+traj.autofill(condition="nonsynonymous", method="random")
+traj.show()
+
+# 
+seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
+traj = snbr.Trajectory(id="Test", data=seq)
+traj.autofill(condition="nonsynonymous", method="mut_type", mut_type="T[C>T]")
+traj.show()
+
+# 
+seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
+traj = snbr.Trajectory(id="Test", data=seq)
+traj.autofill(condition="nonsynonymous", method="signature", mutational_signature="SBS2")
+traj.show()
+
+
+
+
+
+
+
 traj1 = snbr.Trajectory("test", seq)
 
 traj1.show()
