@@ -31,6 +31,7 @@ TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT   .           .              .              
 
 ### 4. Generate trajectory: 
 You can generate trajectory automatically by giving a condition (`max_length` or `nonsynonymous`) and a method (`random`, `mut_type`, or `signature`)
+
 __Example 1__
 ```python
 # max_length with random
