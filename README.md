@@ -9,7 +9,17 @@ Import Sinabro as:
 import sinabro as snbr
 ```
 
-Initialize trajectory: you need to provide id(str) and data(str, Seq, MutableSeq)
+Initialize trajectory: you need to provide id(`str`{:.python}) and data(str, Seq, MutableSeq)
 ```python
-traj = snbr.Trajectory(id="Test", data="TATGCGTAAATGAT")
+seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
+traj = snbr.Trajectory(id="Test", data=seq)
 ```
+
+Display trajectory:
+```python
+traj.show()
+
+
+```
+
+Generate trajectory: you can generate trajectory automatically by giving condition(max_length or )`x = 4`{:.ruby}
