@@ -155,4 +155,5 @@ TATGCTGACTCGGTCATCGATCGGTTCTTATTGAT   c.28C>T     p.10His>Tyr    T[C>T]A        
 ```
 
 # License
-Sinabro is under [BSD-3-Clause license](LICENSE).
+Sinabro is released under [BSD-3-Clause license](LICENSE).
+If Sinabro is useful for your research, consider citing (to be included).
