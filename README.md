@@ -154,3 +154,5 @@ TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT   .           .              .              
 TATGCTGACTCGGTCATCGATCGGTTCTTATTGAT   c.28C>T     p.10His>Tyr    T[C>T]A         .
 ```
 
+# License
+Sinabro is under [BSD-3-Clause license]((LICENSE).
