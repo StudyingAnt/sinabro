@@ -4,21 +4,23 @@
 ![My Image](images/Sinabro_white.png)
 
 ## How to use
-Import Sinabro as:
+### 1. Import Sinabro as:
 ```python
 import sinabro as snbr
 ```
 
-Initialize trajectory: you need to provide id (`str`) and data (`str`, `Seq`, or `MutableSeq`)
+### 2. Initialize trajectory: 
+You need to provide id (`str`) and data (`str`, `Seq`, or `MutableSeq`)
 ```python
 seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
 traj = snbr.Trajectory(id="Test", data=seq)
 ```
 
-Display trajectory:
+### 3. Display trajectory:
 ```python
 traj.show()
 ```
+__result__
 ```console
 ID: test
 Trajectory length: 0
@@ -27,7 +29,9 @@ Sequence                              HGVS_mRNA   HGVS_Protein   Mutation_Type  
 TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT   .           .              .               .
 ```
 
-Generate trajectory: you can generate trajectory automatically by giving a condition (`max_length` or `nonsynonymous`) and a method (`random`, `mut_type`, or `signature`)
+### 4. Generate trajectory: 
+You can generate trajectory automatically by giving a condition (`max_length` or `nonsynonymous`) and a method (`random`, `mut_type`, or `signature`)
+__Example 1__
 ```python
 # max_length with random
 seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
@@ -36,6 +40,7 @@ traj.autofill(condition="max_length", method="random")
 
 traj.show()
 ```
+__result__
 ```console
 ID: Test
 Trajectory length: 10
@@ -53,13 +58,14 @@ TATGCACACTCGGGCCTCGTTCTTTTCTCATTGAT   c.23G>T     p.8Cys>Phe     [G>T]          
 TATGCACACTCGGGCCTCCTTCTTTTCTCATTGAT   c.18G>C     .              [G>C]           .
 TATGCACACTCGGGCTTCCTTCTTTTCTCATTGAT   c.15C>T     .              [C>T]           .
 ```
-
+__Example 2__
 ```python
 # max_length with mut_type
 seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
 traj = snbr.Trajectory(id="Test", data=seq)
 traj.autofill(condition="max_length", method="mut_type", mut_type="T[C>T]")
 ```
+__result__
 ```console
 ID: Test
 Trajectory length: 6
@@ -73,13 +79,14 @@ TATGCTGACTTGGTTATCGATTGGTTTTCATTGAT   c.21C>T     .              T[C>T]         
 TATGCTGACTTGGTTATCGATTGGTTTTTATTGAT   c.28C>T     p.10His>Tyr    T[C>T]          .
 TATGCTGACTTGGTTATTGATTGGTTTTTATTGAT   c.17C>T     p.6Ser>Leu     T[C>T]          .
 ```
-
+__Example 3__
 ```python
 # max_length with signature
 seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
 traj = snbr.Trajectory(id="Test", data=seq)
 traj.autofill(condition="max_length", method="signature", mutational_signature="SBS2")
 ```
+__result__
 ```console
 ID: Test
 Trajectory length: 10
@@ -97,13 +104,14 @@ TATGCTAACTTGGTTATTAATCGGTTTTTATTAAT   c.28C>T     p.10His>Tyr    T[C>T]A        
 TATGCTAACTTGGTTATTAATCAGTTTTTATTAAT   c.22G>A     p.8Gly>Ser     C[C>T]G         .
 TATGCTAACTTGGTTATTAATTAGTTTTTATTAAT   c.21C>T     .              T[C>T]A         .
 ```
-
+__Example 4__
 ```python
 # nonsynonymous with random
 seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
 traj = snbr.Trajectory(id="Test", data=seq)
 traj.autofill(condition="nonsynonymous", method="random")
 ```
+__result__
 ```console
 ID: Test
 Trajectory length: 1
@@ -112,12 +120,14 @@ Sequence                              HGVS_mRNA   HGVS_Protein   Mutation_Type  
 TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT   .           .              .               .
 TATGCTGACTCGGTTATCGATCGGTTCTCATTGAT   c.14C>T     p.5Ser>Leu     [C>T]           .
 ```
+__Example 5__
 ```python
-# 
+# nonsynonymous with mut_type
 seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
 traj = snbr.Trajectory(id="Test", data=seq)
 traj.autofill(condition="nonsynonymous", method="mut_type", mut_type="T[C>T]")
 ```
+__result__
 ```console
 ID: Test
 Trajectory length: 1
@@ -126,13 +136,14 @@ Sequence                              HGVS_mRNA   HGVS_Protein   Mutation_Type  
 TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT   .           .              .               .
 TATGCTGACTTGGTCATCGATCGGTTCTCATTGAT   c.10C>T     p.4Arg>Trp     T[C>T]          .
 ```
-
+__Example 6__
 ```python
-# 
+# nonsynonymous with signature
 seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
 traj = snbr.Trajectory(id="Test", data=seq)
 traj.autofill(condition="nonsynonymous", method="signature", mutational_signature="SBS2")
 ```
+__result__
 ```console
 ID: Test
 Trajectory length: 1
