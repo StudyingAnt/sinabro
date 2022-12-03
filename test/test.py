@@ -12,25 +12,25 @@ from pathlib import Path, PurePath
 # idx  01234567891123456789212345678931234
 # c.  -1123456789112345678921234567893123+1  
 seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
-
+"""
 # 
 seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
 traj = snbr.Trajectory(id="Test", data=seq)
 traj.autofill(condition="max_length", method="random")
-traj.show()
+traj.show(show_idx=True)
 
 # 
 seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
 traj = snbr.Trajectory(id="Test", data=seq)
 traj.autofill(condition="max_length", method="mut_type", mut_type="T[C>T]")
-traj.show()
-
+traj.show(show_idx=True)
+"""
 # 
 seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
 traj = snbr.Trajectory(id="Test", data=seq)
 traj.autofill(condition="max_length", method="signature", mutational_signature="SBS2")
-traj.show()
-
+traj.show(show_idx=True)
+"""
 # 
 seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
 traj = snbr.Trajectory(id="Test", data=seq)
@@ -76,3 +76,4 @@ traj1.show()
 #home = "/mnt/c/Users/CEEL-PC-005"
 #output_path = PurePath(home, "Desktop/Joon")
 #traj1.save(output_path, prefix="Test", suffix=str(1))
+"""
