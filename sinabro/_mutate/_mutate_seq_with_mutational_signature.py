@@ -1,5 +1,6 @@
 import os
 import math
+import time
 
 import numpy as np
 import pandas as pd
@@ -173,9 +174,11 @@ def mutate_seq_with_mutational_signature(
     num_nonzero = np.count_nonzero(P)
     if not num_nonzero:
         return MutInfo(MutableSeq(""), -1, "", "", 1)
-   
+    
+    seed1 = time.time()
+    seed2 = (seed1 - int(seed1))*(10**7)
+    np.random.seed(int(seed1+seed2))
     idx_flat = np.random.choice(len(seq)*4, p=P.flatten("F"))
-
     idx_base = idx_flat%4
     idx_target = math.floor(idx_flat/4)
 

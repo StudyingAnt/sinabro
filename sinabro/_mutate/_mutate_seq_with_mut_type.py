@@ -1,3 +1,4 @@
+import time
 import numpy as np
 
 from Bio.Seq import Seq, MutableSeq
@@ -55,6 +56,9 @@ def mutate_seq_with_mut_type(seq, mut_type, start=None, end=None):
         return MutInfo(MutableSeq(""), -1, "", "", 1)
     
     # select specific motif to mutate
+    seed1 = time.time()
+    seed2 = (seed1 - int(seed1))*(10**7)
+    np.random.seed(int(seed1+seed2))
     idx_motif = np.random.choice(idx_motifs, 1)[0] 
     idx_target = _get_idx_target_from_idx_motif(idx_motif, mut_type)
 

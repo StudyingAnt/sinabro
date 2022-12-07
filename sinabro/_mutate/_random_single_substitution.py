@@ -1,3 +1,4 @@
+import time
 import numpy as np
 
 from Bio.Seq import Seq, MutableSeq
@@ -52,6 +53,9 @@ def random_single_substitution(seq, start=None, end=None):
     nt_before = seq[idx_target:idx_target+1]
     A = ["A", "C", "G", "T"]
     A.remove(nt_before)
+    seed1 = time.time()
+    seed2 = (seed1 - int(seed1))*(10**7)
+    np.random.seed(int(seed1+seed2))
     nt_after = np.random.choice(A, 1,
                                 p=np.array([1/3, 1/3, 1/3])
                                 )[0]
