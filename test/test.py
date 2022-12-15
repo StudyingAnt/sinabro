@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(0, "/mnt/c/Users/CEEL-PC-005/Desktop/Joon/sinabro")
+#sys.path.insert(0, "/mnt/c/Users/CEEL-PC-005/Desktop/Joon/sinabro")
 #sys.path.insert(0, "/home/augustine/Desktop/Labs/0_Dry/projSETA/sinabro")
 import sinabro.sinabro as snbr
 
@@ -12,24 +12,27 @@ from pathlib import Path, PurePath
 # idx  01234567891123456789212345678931234
 # c.  -1123456789112345678921234567893123+1  
 seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
+
 """
 # 
 seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
 traj = snbr.Trajectory(id="Test", data=seq)
 traj.autofill(condition="max_length", method="random")
 traj.show(show_idx=True)
-
+"""
 # 
 seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
 traj = snbr.Trajectory(id="Test", data=seq)
-traj.autofill(condition="max_length", method="mut_type", mut_type="T[C>T]")
+traj.autofill(condition="max_length", method="mut_type", mut_type="T[G>A]A")
 traj.show(show_idx=True)
+
 """
 # 
 seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
 traj = snbr.Trajectory(id="Test", data=seq)
 traj.autofill(condition="max_length", method="signature", mutational_signature="SBS2")
 traj.show(show_idx=True)
+"""
 """
 # 
 seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
