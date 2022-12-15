@@ -63,7 +63,8 @@ def mutate_seq_with_mut_type(seq, mut_type, start=None, end=None):
     idx_target = _get_idx_target_from_idx_motif(idx_motif, mut_type)
 
     nt_before = seq[idx_target:idx_target+1]
-    seq[idx_motif:idx_target+1] = _get_result_of_mut_type(mut_type)
+    len_motif = len(_get_result_of_mut_type(mut_type))
+    seq[idx_motif:idx_motif+len_motif] = _get_result_of_mut_type(mut_type)
     nt_after = seq[idx_target:idx_target+1]
     
     hgvs_mrna = f"c.{str(idx_target)}{nt_before}>{nt_after}"
