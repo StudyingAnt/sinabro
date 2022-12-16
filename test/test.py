@@ -23,7 +23,7 @@ traj.show(show_idx=True)
 # 
 seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
 traj = snbr.Trajectory(id="Test", data=seq)
-traj.autofill(condition="max_length", method="mut_type", mut_type="T[G>A]A")
+traj.autofill(condition="evaluation", method="signature", mutational_signature="SBS2", measure="blastp", threshold=10)
 traj.show(show_idx=True)
 
 """
@@ -52,7 +52,11 @@ traj = snbr.Trajectory(id="Test", data=seq)
 traj.autofill(condition="nonsynonymous", method="signature", mutational_signature="SBS2")
 traj.show()
 
-
+# 
+#seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
+#traj = snbr.Trajectory(id="Test", data=seq)
+#traj.autofill(condition="max_length", method="mut_type", mut_type="T[G>A]A")
+#traj.show(show_idx=True)
 
 
 

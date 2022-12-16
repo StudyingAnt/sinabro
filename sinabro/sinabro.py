@@ -4,6 +4,7 @@ import os
 import math
 import random
 import sys
+import subprocess
 
 import numpy as np
 import pandas as pd
@@ -34,6 +35,10 @@ from ._helper._helper import (
     _get_amino_acid_from_codon
 )
 
+from .evaluation.evaluation import (
+    get_stop_condition
+)
+
     
 class Trajectory():    
     def __init__(self, id, data, note="."):
@@ -56,7 +61,8 @@ class Trajectory():
         self._hgvs_mrnas = ["."]
         self._hgvs_aa = ["."]
         self._mut_types = ["."]
-        self._notes = [note]        
+        self._notes = [note]
+        #self._scores = ["."]        
         self._length = 0
     
     def show(self, verbose= True, noseq=False, show_idx=False):
@@ -312,6 +318,80 @@ class Trajectory():
 
                     self._hgvs_aa.append(f"p.{pos_aa}{old_aa}>{new_aa}")
                     stop_flag = True
+        elif condition == "evaluation":
+            if method == "random": 
+                pass
+            elif method == "mut_type": 
+                pass
+            elif method == "signature":
+                pass
+            else:
+                raise ValueError(
+                    "condition must be either max_length or nonsynonymous"
+                )
+
+            if "measure" in kwargs.keys():
+                measure = kwargs["measure"]
+            else:
+                raise ValueError(
+                        "measure must be given"
+                    )
+
+            if measure == "blastp":
+                std_seq = self._data[0]
+                std_seq = std_seq[1:len(std_seq)-1]
+                std_pp_seq = std_seq.translate()
+
+                record = SeqRecord(std_pp_seq, id="stdseq", description="")
+                SeqIO.write(record, "tmp_std_seq.fa", "fasta")
+
+                ori_score = subprocess.run(
+                    [
+                        "blastp",
+                        "-subject", "tmp_std_seq.fa",
+                        "-query", "tmp_std_seq.fa",
+                        "-outfmt", "6 bitscore"
+                    ],
+                    stdout=subprocess.PIPE
+                ).stdout.decode("utf-8")
+                ori_score = float(ori_score.replace("\n", "0"))  
+                self._notes[0] = str(ori_score)
+
+            stop_flag = False
+            while not stop_flag:
+                last_seq = self._data[-1]
+                self.add_mutated_sequence(**kwargs)
+
+                curr_seq = self._data[-1]
+                prev_seq = self._data[-2]
+
+                idx_target = _get_idx_from_hgvs_mrna(
+                    self._hgvs_mrnas[-1], 
+                    offset=1
+                    )
+
+                new_codon = _get_codon(curr_seq, idx_target)
+                old_codon = _get_codon(prev_seq, idx_target)
+ 
+                if _is_codon_synonymous(new_codon, old_codon):
+                    self._hgvs_aa.append(".")
+                else:
+                    pos_aa = _get_pos_aa(idx_target)
+
+                    new_aa = _get_amino_acid_from_codon(new_codon, three=True)
+                    old_aa = _get_amino_acid_from_codon(old_codon, three=True)
+
+                    self._hgvs_aa.append(f"p.{pos_aa}{old_aa}>{new_aa}")
+                stop_flag, rlt_score = get_stop_condition(
+                    curr_seq, 
+                    ori_score, 
+                    **kwargs
+                    )                
+                self._notes[-1] = rlt_score
+            
+            subprocess.run(["rm", "tmp_std_seq.fa"])
+            subprocess.run(["rm", "tmp_cur_seq.fa"])
+            
         else:
             raise ValueError(
                 "condition must be either max_length or nonsynonymous"
