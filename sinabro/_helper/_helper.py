@@ -23,6 +23,30 @@ class MutInfo:
         self.mut_type = mut_type
         self.e = e
 
+def _reverse_complement_mut_type(
+        mut_type: str
+    ) -> str:
+
+    open_bracet_pos = re.search("\[", mut_type).start()
+    change_symbol_pos = re.search("\>", mut_type).start()
+    close_bracet_pos = re.search("\]", mut_type).start()
+
+    before_bracet = mut_type[:open_bracet_pos]
+    after_bracet = mut_type[close_bracet_pos+1:]
+
+    seq_target = mut_type[open_bracet_pos+1:change_symbol_pos]
+    seq_result = mut_type[change_symbol_pos+1:close_bracet_pos]
+
+    # reverse complement
+    new_before_bracet = str(Seq(after_bracet).reverse_complement())
+    new_after_bracet = str(Seq(before_bracet).reverse_complement())
+    new_seq_target = str(Seq(seq_target).reverse_complement())
+    new_seq_result = str(Seq(seq_result).reverse_complement())
+
+    revcomp_mut_type = f"{new_before_bracet}[{new_seq_target}>{new_seq_result}]{new_after_bracet}"
+
+    return revcomp_mut_type
+
 
 def _get_target_of_mut_type(
     mut_type: str,

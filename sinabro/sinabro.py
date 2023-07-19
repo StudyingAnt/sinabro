@@ -181,10 +181,15 @@ class Trajectory():
                 note = kwargs["note"]
             else:
                 note = "."
+            if "strand" in kwargs.keys():
+                strand = kwargs["strand"]
+            else:
+                strand = "both"
             last_seq = self._data[-1]
             mutinfo = mutate_seq_with_mut_type(
                 last_seq,
                 mut_type=mut_type,
+                strand=strand,
                 start=1,
                 end=self._seq_length-2
                 )
