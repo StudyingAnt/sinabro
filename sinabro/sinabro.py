@@ -200,7 +200,7 @@ class Trajectory():
                             note=note)
                 self._length = self._length+1
             else:
-                pass
+                self._notes[-1] = "No_Motif"
         elif method == "signature":
             mutational_signature = kwargs["mutational_signature"]
             if "cosmic_version" in kwargs.keys():
@@ -265,6 +265,9 @@ class Trajectory():
                 last_seq = self._data[-1]
                 self.add_mutated_sequence(**kwargs)
 
+                if self._notes[-1] == "No_Motif":
+                    break
+
                 curr_seq = self._data[-1]
                 prev_seq = self._data[-2]
 
@@ -301,6 +304,9 @@ class Trajectory():
             while not stop_flag:
                 last_seq = self._data[-1]
                 self.add_mutated_sequence(**kwargs)
+
+                if self._notes[-1] == "No_Motif":
+                    break
 
                 curr_seq = self._data[-1]
                 prev_seq = self._data[-2]

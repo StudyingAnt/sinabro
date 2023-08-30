@@ -3,6 +3,8 @@ import sys
 #sys.path.insert(0, "/home/augustine/Desktop/Labs/0_Dry/projSETA/sinabro")
 import sinabro.sinabro as snbr
 from sinabro._helper._helper import _reverse_complement_mut_type
+from sinabro._helper._helper import _unpack_complex_mut_type
+from sinabro._helper._helper import generate_random_sequence
 from sinabro._mutate._mutate_seq_with_mut_type import mutate_seq_with_mut_type
 
 import os
@@ -12,13 +14,19 @@ from pathlib import Path, PurePath
 #new_mut_type = _reverse_complement_mut_type("T[C>T]C")
 #print(new_mut_type)
 
+#mut_types = _unpack_complex_mut_type("TY[C>T]")
+#print(mut_types)
+
 # 35 bp 11 codon 10 aa
 # cnt  12345678911234567892123456789312345
 # idx  01234567891123456789212345678931234
 # c.  -1123456789112345678921234567893123+1  
-seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
+#seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
+seq = "TATG"+str(generate_random_sequence(3*8))+"TGAT"
+print(seq)
+#seq = "TATGAGTTGGGACCCATCGTAAGTAACCTGAT"
 traj = snbr.Trajectory(id="Test", data=seq)
-traj.autofill(condition="nonsynonymous", method="mut_type", strand="both", mut_type="T[C>T]")
+traj.autofill(condition="max_length", method="mut_type", strand="both", mut_type="TY[C>T]")
 traj.show()
 
 """

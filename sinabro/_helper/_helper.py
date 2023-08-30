@@ -1,5 +1,6 @@
 import re
 import math
+import itertools
 
 import numpy as np
 
@@ -22,6 +23,47 @@ class MutInfo:
         self.hgvs_mrna = hgvs_mrna
         self.mut_type = mut_type
         self.e = e
+
+def _unpack_complex_mut_type(
+        mut_type: str
+    ) -> str:
+
+    mut_type_nts = [nt for nt in mut_type if nt not in ["[", ">", "]"]]
+    non_single_iupac_nts = [
+        "R", "Y", "S", "W", "K", "M", 
+        "B", "D", "H", "V",
+        "N"
+        ]
+    
+    iupac_table = {
+        "R": ["A", "G"],
+        "Y": ["C", "T"],
+        "S": ["G", "C"],
+        "W": ["A", "T"],
+        "K": ["G", "T"],
+        "M": ["A", "C"],
+        "B": ["C", "G", "T"],
+        "D": ["A", "G", "T"],
+        "H": ["A", "C", "T"],
+        "V": ["A", "C", "G"],
+        "N": ["A", "C", "G", "T"]
+    }
+
+    mut_types_pre = []
+    for c in mut_type:
+        if c in non_single_iupac_nts:
+            mut_types_pre.append(iupac_table[c])
+        else:
+            mut_types_pre.append([c])
+
+    mut_types_split = list(itertools.product(*mut_types_pre))
+
+    mut_types = []
+    for new_mut_type in mut_types_split:
+        mut_types.append("".join(new_mut_type))       
+
+    return mut_types
+    
 
 def _reverse_complement_mut_type(
         mut_type: str
