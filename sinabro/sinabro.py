@@ -157,15 +157,37 @@ class Trajectory():
     def add_mutated_sequence(self, **kwargs) -> list:
         method = kwargs["method"]
         if method == "random":
+            # check passed kwargs and assign accordingly
             if "note" in kwargs.keys():
                 note = kwargs["note"]
             else:
                 note = "."
+            
+            if "start" in kwargs.keys():
+                if kwargs["start"] < 0:
+                    start = self._seq_length+kwargs["start"]
+                else:
+                    start = kwargs["start"]
+            else:
+                start = 0
+
+            if "end" in kwargs.keys():
+                if kwargs["end"] < 0:
+                    end = self._seq_length+kwargs["end"]
+                elif kwargs["end"] >= start:
+                    end = kwargs["end"]-1
+                else:
+                    raise ValueError(
+                    "end should be equal or greater than start"
+                )
+            else:
+                end = self._seq_length-1
+
             last_seq = self._data[-1]
             mutinfo = random_single_substitution(
                 last_seq,
-                start=1,
-                end=self._seq_length-2
+                start=start,
+                end=end
                 )
             if not mutinfo.e:
                 self.append(mutinfo.new_seq, 
@@ -185,13 +207,32 @@ class Trajectory():
                 strand = kwargs["strand"]
             else:
                 strand = "both"
+            if "start" in kwargs.keys():
+                if kwargs["start"] < 0:
+                    start = self._seq_length+kwargs["start"]
+                else:
+                    start = kwargs["start"]
+            else:
+                start = 0
+
+            if "end" in kwargs.keys():
+                if kwargs["end"] < 0:
+                    end = self._seq_length+kwargs["end"]
+                elif kwargs["end"] >= start:
+                    end = kwargs["end"]-1
+                else:
+                    raise ValueError(
+                    "end should be equal or greater than start"
+                )
+            else:
+                end = self._seq_length-1
             last_seq = self._data[-1]
             mutinfo = mutate_seq_with_mut_type(
                 last_seq,
                 mut_type=mut_type,
                 strand=strand,
-                start=1,
-                end=self._seq_length-2
+                start=start,#1,#1,
+                end=end#self._seq_length-2
                 )
             if not mutinfo.e:
                 self.append(mutinfo.new_seq, 
@@ -260,6 +301,13 @@ class Trajectory():
         **kwargs
         ):
         method = kwargs['method']
+        if "start" in kwargs.keys():
+            if kwargs["start"] < 0:
+                start = self._seq_length+kwargs["start"]
+            else:
+                start = kwargs["start"]
+        else:
+            start = 0
         if condition == "max_length":
             for _ in range(max_length):
                 last_seq = self._data[-1]
@@ -270,14 +318,14 @@ class Trajectory():
 
                 curr_seq = self._data[-1]
                 prev_seq = self._data[-2]
-
+                
                 idx_target = _get_idx_from_hgvs_mrna(
                     self._hgvs_mrnas[-1], 
-                    offset=1
+                    offset=start
                     )
 
-                new_codon = _get_codon(curr_seq, idx_target)
-                old_codon = _get_codon(prev_seq, idx_target)              
+                new_codon = _get_codon(curr_seq, idx_target, start)
+                old_codon = _get_codon(prev_seq, idx_target, start)                            
                     
                 if _is_codon_synonymous(new_codon, old_codon):
                     self._hgvs_aa.append(".")
@@ -313,11 +361,11 @@ class Trajectory():
 
                 idx_target = _get_idx_from_hgvs_mrna(
                     self._hgvs_mrnas[-1], 
-                    offset=1
+                    offset=start
                     )
 
-                new_codon = _get_codon(curr_seq, idx_target)
-                old_codon = _get_codon(prev_seq, idx_target)
+                new_codon = _get_codon(curr_seq, idx_target, start)
+                old_codon = _get_codon(prev_seq, idx_target, start)
  
                 if _is_codon_synonymous(new_codon, old_codon):
                     self._hgvs_aa.append(".")

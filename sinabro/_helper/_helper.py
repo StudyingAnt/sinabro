@@ -180,8 +180,9 @@ def _is_codon_synonymous(codon1, codon2):
         return False
 
 
-def _get_idx_codon(idx_target):
-    idx_codon = int(math.floor((idx_target-1)/3)*3+1)
+def _get_idx_codon(idx_target, start):
+    #idx_codon = int(math.floor((idx_target-1)/3)*3+1)
+    idx_codon = int(math.floor((idx_target-1)/3)*3+start)
 
     return idx_codon
 
@@ -192,7 +193,7 @@ def _get_pos_aa(idx_target):
     return pos_aa
 
 
-def _get_codon(seq, idx_target):
+def _get_codon(seq, idx_target, start):
     if isinstance(seq, str):
         pass
     elif isinstance(seq, Seq):
@@ -204,7 +205,7 @@ def _get_codon(seq, idx_target):
             "seq should be a string, Seq, or MutableSeq object"
         )
 
-    idx_codon = _get_idx_codon(idx_target)
+    idx_codon = _get_idx_codon(idx_target, start)
 
     codon = seq[idx_codon:idx_codon+3]
 
