@@ -33,7 +33,7 @@ seq = "TATG"+str(generate_random_sequence(3*8))+"TGAT"
 #print(2*[1/4,1/3,5/12])
 
 traj = snbr.Trajectory(id="Test", data=seq)
-traj.autofill(condition="max_length", method="mut_types", strand="both", mut_types=["AA[C>T]", "AC[C>T]", "TT[C>T]"], mut_type_probs = [1/4,1/3,5/12])
+traj.autofill(condition="max_length", method="mut_types", strand="both", start = 1, mut_types=["AA[C>T]", "AC[C>T]", "TT[C>T]"], mut_type_probs = [1/4,1/3,5/12])
 traj.show()
 
 """

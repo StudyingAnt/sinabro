@@ -390,6 +390,8 @@ class Trajectory():
                 pass
             elif method == "mut_type": 
                 pass
+            elif method == "mut_types":
+                pass
             elif method == "signature":
                 pass
             else:

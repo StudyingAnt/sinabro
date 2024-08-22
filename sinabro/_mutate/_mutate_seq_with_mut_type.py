@@ -347,6 +347,15 @@ def mutate_seq_with_mut_types(seq, mut_types, mut_type_probs, strand = "both", s
             pre_probs = pre_probs + len(new_motifs)*[mut_type_dict[mut_type]]
             strand_mut_types = strand_mut_types + len(new_motifs)*["+"]
             idx_motifs = idx_motifs + new_motifs
+        
+        # filter out index out of range
+        valid_indice = [idx for idx, x in enumerate(idx_motifs) if start <= x <= end]
+
+        idx_motifs = np.array(idx_motifs)[valid_indice].tolist()
+        pre_probs = np.array(pre_probs)[valid_indice].tolist()
+        mut_type_idxs = np.array(mut_type_idxs)[valid_indice].tolist()
+        strand_mut_types = np.array(strand_mut_types)[valid_indice].tolist()
+
 
         idx_order = np.argsort(idx_motifs)
 
@@ -414,6 +423,15 @@ def mutate_seq_with_mut_types(seq, mut_types, mut_type_probs, strand = "both", s
             strand_mut_types = strand_mut_types + len(new_motifs)*["-"]
             idx_motifs = idx_motifs + new_motifs
 
+        # filter out index out of range
+        valid_indice = [idx for idx, x in enumerate(idx_motifs) if start <= x <= end]
+
+        idx_motifs = np.array(idx_motifs)[valid_indice].tolist()
+        pre_probs = np.array(pre_probs)[valid_indice].tolist()
+        mut_type_idxs = np.array(mut_type_idxs)[valid_indice].tolist()
+        strand_mut_types = np.array(strand_mut_types)[valid_indice].tolist()
+
+        # reorder the lists
         idx_order = np.argsort(idx_motifs)
 
         idx_motifs = np.array(idx_motifs)[idx_order].tolist()
