@@ -99,7 +99,7 @@ def mutate_seq_with_mutational_signature(
         seq = MutableSeq(seq)
         data_type = "str"
     elif isinstance(seq, Seq):
-        seq = MutableSeq(seq)
+        seq = MutableSeq(str(seq))
         data_type = "Seq"
     elif isinstance(seq, MutableSeq):
         data_type = "MutableSeq"

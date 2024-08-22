@@ -10,6 +10,8 @@ from sinabro._mutate._mutate_seq_with_mut_type import mutate_seq_with_mut_type
 import os
 from pathlib import Path, PurePath
 
+import numpy as np
+
 
 #new_mut_type = _reverse_complement_mut_type("T[C>T]C")
 #print(new_mut_type)
@@ -23,10 +25,15 @@ from pathlib import Path, PurePath
 # c.  -1123456789112345678921234567893123+1  
 #seq = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
 seq = "TATG"+str(generate_random_sequence(3*8))+"TGAT"
-print(seq)
+#print(seq)
 #seq = "TATGAGTTGGGACCCATCGTAAGTAACCTGAT"
+
+#print(np.array([7,4,3])*np.array([1/4,1/3,5/12]))
+
+#print(2*[1/4,1/3,5/12])
+
 traj = snbr.Trajectory(id="Test", data=seq)
-traj.autofill(condition="max_length", method="mut_type", strand="both", mut_type="TY[C>T]")
+traj.autofill(condition="max_length", method="mut_types", strand="both", mut_types=["AA[C>T]", "AC[C>T]", "TT[C>T]"], mut_type_probs = [1/4,1/3,5/12])
 traj.show()
 
 """

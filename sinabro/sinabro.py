@@ -20,7 +20,8 @@ from ._mutate._random_single_substitution import (
     random_single_substitution
 )
 from ._mutate._mutate_seq_with_mut_type import (
-    mutate_seq_with_mut_type
+    mutate_seq_with_mut_type,
+    mutate_seq_with_mut_types
 )
 from ._mutate._mutate_seq_with_mutational_signature import (
     mutate_seq_with_mutational_signature
@@ -230,6 +231,53 @@ class Trajectory():
             mutinfo = mutate_seq_with_mut_type(
                 last_seq,
                 mut_type=mut_type,
+                strand=strand,
+                start=start,#1,#1,
+                end=end#self._seq_length-2
+                )
+            if not mutinfo.e:
+                self.append(mutinfo.new_seq, 
+                            hgvs_mrna=mutinfo.hgvs_mrna, 
+                            mut_type=mutinfo.mut_type,
+                            note=note)
+                self._length = self._length+1
+            else:
+                self._notes[-1] = "No_Motif"
+        elif method == "mut_types":
+            mut_types = kwargs["mut_types"]
+            mut_type_probs = kwargs["mut_type_probs"]
+            if "note" in kwargs.keys():
+                note = kwargs["note"]
+            else:
+                note = "."
+            if "strand" in kwargs.keys():
+                strand = kwargs["strand"]
+            else:
+                strand = "both"
+            if "start" in kwargs.keys():
+                if kwargs["start"] < 0:
+                    start = self._seq_length+kwargs["start"]
+                else:
+                    start = kwargs["start"]
+            else:
+                start = 0
+
+            if "end" in kwargs.keys():
+                if kwargs["end"] < 0:
+                    end = self._seq_length+kwargs["end"]
+                elif kwargs["end"] >= start:
+                    end = kwargs["end"]-1
+                else:
+                    raise ValueError(
+                    "end should be equal or greater than start"
+                )
+            else:
+                end = self._seq_length-1
+            last_seq = self._data[-1]
+            mutinfo = mutate_seq_with_mut_types(
+                last_seq,
+                mut_types=mut_types,
+                mut_type_probs=mut_type_probs,
                 strand=strand,
                 start=start,#1,#1,
                 end=end#self._seq_length-2
