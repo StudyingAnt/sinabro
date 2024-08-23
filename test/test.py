@@ -12,6 +12,9 @@ from pathlib import Path, PurePath
 
 import numpy as np
 
+import pandas as pd
+
+from Bio import SeqIO
 
 #new_mut_type = _reverse_complement_mut_type("T[C>T]C")
 #print(new_mut_type)
@@ -35,6 +38,52 @@ seq = "TATG"+str(generate_random_sequence(3*8))+"TGAT"
 traj = snbr.Trajectory(id="Test", data=seq)
 traj.autofill(condition="max_length", method="mut_types", strand="both", start = 1, mut_types=["AA[C>T]", "AC[C>T]", "TT[C>T]"], mut_type_probs = [1/4,1/3,5/12])
 traj.show()
+
+##
+bat = "molMol2"
+
+exp_dir = PurePath("/mnt/c/Users/CEEL-PC-005/Desktop/Joon/Final_scripts/Simple_robustness_analysis_of_cds_files/Bat_genome")
+in_dir = PurePath(exp_dir, "Bat1KPilotProject/HLmolMol2")
+out_dir = PurePath(exp_dir, "results")
+
+genes_fasta_file = PurePath(in_dir, "HL"+bat+".all.pc_transcripts.cdsplus.fa")
+
+seq_records = list(SeqIO.parse(genes_fasta_file, "fasta"))
+
+gene_idx = 1000
+transcript_name = seq_records[gene_idx].id.split(".")[0]
+seq = seq_records[gene_idx].seq
+
+apobec_prob = pd.read_csv(PurePath(in_dir, bat+"_apobec.csv"))
+
+mut_types = apobec_prob["mut_type"]
+apobecs = ["APOBEC3A", "APOBEC3C", "APOBEC1"]
+
+rlt_dict = {}
+for apobec in apobecs:
+    rlt_dict[apobec] = []
+
+n_traj = 1000
+for apobec in apobecs:
+    for _ in range(n_traj):
+        traj = snbr.Trajectory(transcript_name, seq)
+        traj.autofill(condition="nonsynonymous", method="mut_types", strand="both",
+                      start = 1, end = traj._seq_length-1,
+                      mut_types=mut_types, mut_type_probs=apobec_prob[apobec])
+        #traj.show()
+        print(" ")
+
+        rlt_dict[apobec].append(traj._length-1)
+
+out_data = pd.DataFrame(rlt_dict)
+out_file = PurePath(out_dir, f"{transcript_name}_rus_apobec.csv")
+out_data.to_csv(out_file, index=False)
+
+
+
+
+
+
 
 """
 # 

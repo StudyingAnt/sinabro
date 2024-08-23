@@ -413,9 +413,11 @@ class Trajectory():
                     self._hgvs_mrnas[-1], 
                     offset=start
                     )
-
+                print(self._hgvs_mrnas[-1])
                 new_codon = _get_codon(curr_seq, idx_target, start)
                 old_codon = _get_codon(prev_seq, idx_target, start)
+
+                print(f"{idx_target} {old_codon} {new_codon}")
  
                 if _is_codon_synonymous(new_codon, old_codon):
                     self._hgvs_aa.append(".")

@@ -411,6 +411,11 @@ def mutate_seq_with_mut_types(seq, mut_types, mut_type_probs, strand = "both", s
         pre_probs = []
         for mut_type in mut_types:
             new_motifs = _get_motif_indices(seq, mut_type)
+            # filter out valid motifs 
+            mut_type_offset = _get_idx_offset_of_mut_type(mut_type)
+            valid_indice = [idx for idx, x in enumerate(new_motifs) if start <= (x+mut_type_offset) <= end]
+            new_motifs = np.array(new_motifs)[valid_indice].tolist()
+
             mut_type_idxs = mut_type_idxs + len(new_motifs)*[mut_type]
             pre_probs = pre_probs + len(new_motifs)*[mut_type_dict[mut_type]]
             strand_mut_types = strand_mut_types + len(new_motifs)*["+"]
@@ -418,23 +423,29 @@ def mutate_seq_with_mut_types(seq, mut_types, mut_type_probs, strand = "both", s
 
         for mut_type in revcomp_mut_types:
             new_motifs = _get_motif_indices(seq, mut_type)
+            # filter out valid motifs 
+            mut_type_offset = _get_idx_offset_of_mut_type(mut_type)
+            valid_indice = [idx for idx, x in enumerate(new_motifs) if start <= (x+mut_type_offset) <= end]
+            new_motifs = np.array(new_motifs)[valid_indice].tolist()
+
             mut_type_idxs = mut_type_idxs + len(new_motifs)*[mut_type]
             pre_probs = pre_probs + len(new_motifs)*[mut_type_dict[mut_type]]
             strand_mut_types = strand_mut_types + len(new_motifs)*["-"]
             idx_motifs = idx_motifs + new_motifs
 
-        # filter out index out of range
-        valid_indice = [idx for idx, x in enumerate(idx_motifs) if start <= x <= end]
+        # # filter out index out of range
+        # valid_indice = [idx for idx, x in enumerate(idx_motifs) if start <= x <= end]
 
-        idx_motifs = np.array(idx_motifs)[valid_indice].tolist()
-        pre_probs = np.array(pre_probs)[valid_indice].tolist()
-        mut_type_idxs = np.array(mut_type_idxs)[valid_indice].tolist()
-        strand_mut_types = np.array(strand_mut_types)[valid_indice].tolist()
+        # idx_motifs = np.array(idx_motifs)[valid_indice].tolist()
+        # pre_probs = np.array(pre_probs)[valid_indice].tolist()
+        # mut_type_idxs = np.array(mut_type_idxs)[valid_indice].tolist()
+        # strand_mut_types = np.array(strand_mut_types)[valid_indice].tolist()
 
         # reorder the lists
         idx_order = np.argsort(idx_motifs)
 
         idx_motifs = np.array(idx_motifs)[idx_order].tolist()
+
         pre_probs = np.array(pre_probs)[idx_order].tolist()
         mut_type_idxs = np.array(mut_type_idxs)[idx_order].tolist()
         strand_mut_types = np.array(strand_mut_types)[idx_order].tolist()
@@ -449,6 +460,11 @@ def mutate_seq_with_mut_types(seq, mut_types, mut_type_probs, strand = "both", s
         np.random.seed(int(seed1+seed2))
 
         selected_idx = np.random.choice(range(len(idx_motifs)), 1, p=probs)[0]
+
+
+        #print(len(idx_motifs))
+        #print(idx_motifs)
+        #print(selected_idx)
 
         idx_motif = idx_motifs[selected_idx]
         selected_strand = strand_mut_types[selected_idx]
@@ -472,21 +488,21 @@ def mutate_seq_with_mut_types(seq, mut_types, mut_type_probs, strand = "both", s
             elif data_type == "MutableSeq":
                 return MutInfo(seq, idx_target, hgvs_mrna, selected_mut_type, 0)
         else:
-            idx_target = _get_idx_target_from_idx_motif(idx_motif, revcomp_mut_type)
+            idx_target = _get_idx_target_from_idx_motif(idx_motif, selected_mut_type)
 
             nt_before = seq[idx_target:idx_target+1]
-            len_motif = len(_get_result_of_mut_type(revcomp_mut_type))
-            seq[idx_motif:idx_motif+len_motif] = _get_result_of_mut_type(revcomp_mut_type)
+            len_motif = len(_get_result_of_mut_type(selected_mut_type))
+            seq[idx_motif:idx_motif+len_motif] = _get_result_of_mut_type(selected_mut_type)
             nt_after = seq[idx_target:idx_target+1]
             
             hgvs_mrna = f"c.{str(idx_target+1-start)}{nt_before}>{nt_after}"
 
             if data_type == "str":
-                return MutInfo(str(seq), idx_target, hgvs_mrna, revcomp_mut_type, 0)
+                return MutInfo(str(seq), idx_target, hgvs_mrna, selected_mut_type, 0)
             elif data_type == "Seq":
-                return MutInfo(Seq(seq), idx_target, hgvs_mrna, revcomp_mut_type, 0)
+                return MutInfo(Seq(seq), idx_target, hgvs_mrna, selected_mut_type, 0)
             elif data_type == "MutableSeq":
-                return MutInfo(seq, idx_target, hgvs_mrna, revcomp_mut_type, 0)
+                return MutInfo(seq, idx_target, hgvs_mrna, selected_mut_type, 0)
 
 
 
