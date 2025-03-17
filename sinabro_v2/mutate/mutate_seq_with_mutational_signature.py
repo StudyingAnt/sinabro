@@ -133,15 +133,7 @@ def compute_mut_prob_matrix(seq, full_mutational_signature):
     return P
 
 @preserve_seq_type
-def mutate_seq_with_mutational_signature(
-    seq: Union[str, Seq, MutableSeq],
-    mutational_signature: str = "SBS1",
-    cosmic_version: float = 3.3,
-    genome_ref: str = "GRCh37",
-    custom_signature_path: str = None,
-    column: str = None,
-    strand_bias: float = 0.5
-) -> tuple[Union[str, Seq, MutableSeq], int, str, int]:
+def mutate_seq_with_mutational_signature(seq, **kwargs):
     """
     Mutate a nucleotide sequence based on a specified mutational signature.
     
@@ -162,6 +154,26 @@ def mutate_seq_with_mutational_signature(
         tuple[Union[str, Seq, MutableSeq], int, str, int]: A tuple containing the mutated sequence, target index, 
         HGVS notation, mutation type, and error code (0 for success).
     """
+    # Set default parameter values
+    defaults = {
+        'mutational_signature': "SBS1",
+        'cosmic_version': 3.3,
+        'genome_ref': "GRCh37",
+        'custom_signature_path': None,
+        'column': None,
+        'strand_bias': 0.5
+    }
+    # Update defaults with values provided in kwargs (if any)
+    defaults.update(kwargs)
+    
+    # Extract parameters from the defaults dictionary
+    mutational_signature = defaults['mutational_signature']
+    cosmic_version = defaults['cosmic_version']
+    genome_ref = defaults['genome_ref']
+    custom_signature_path = defaults['custom_signature_path']
+    column = defaults['column']
+    strand_bias = defaults['strand_bias']
+
     start = 0
     end = len(seq) - 1
 

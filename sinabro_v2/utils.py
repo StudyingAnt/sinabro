@@ -61,6 +61,18 @@ def generate_random_sequence(length, gc=0.5):
     # Return the generated sequence as a Bio.Seq object.
     return seq
 
+def get_codon(seq, idx_target):
+    # Map remainder to the offset needed to compute the codon start
+    offset_map = {0: -2, 1: 0, 2: -1}
+    idx_codon_start = idx_target + offset_map[idx_target % 3]
+
+    # Optional: Check if the codon indices are within the bounds of the sequence.
+    if idx_codon_start < 0 or idx_codon_start + 3 > len(seq):
+        raise ValueError("The calculated codon indices are out of range.")
+
+    return seq[idx_codon_start:idx_codon_start+3]
+
+
 def get_amino_acid_from_codon(codon, three=False):
     """
     Return the corresponding amino acid for a given codon.

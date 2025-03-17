@@ -7,7 +7,7 @@ from ..types.types import MutInfo, MutationRecord
 from ._helper import preserve_seq_type
 
 @preserve_seq_type
-def random_single_substitution(seq):
+def random_single_substitution(seq, **kwargs):
     """
     Performs a random single nucleotide substitution on the given sequence.
     

@@ -208,7 +208,23 @@ def _mutate_seq_with_mut_type_complex(seq, mut_type, mut_type_bias=None, strand=
 
 
 @preserve_seq_type
-def mutate_seq_with_mut_type(seq, mut_type, strand = "both"):
+def mutate_seq_with_mut_type(seq, **kwargs):
+    # Set default parameter values
+    defaults = {
+        'mut_type': None,
+        'strand': 0.5
+    }
+    # Update defaults with values provided in kwargs (if any)
+    defaults.update(kwargs)
+    
+    # Extract parameters from the defaults dictionary
+    mut_type = defaults['mut_type']
+    strand = defaults['strand']
+
+    # Check mut_type provided.
+    if mut_type is None:
+        raise ValueError("A value for 'mut_type' must be provided.")
+
     # Validate strand parameter.
     if strand not in ("both", "single"):
         raise ValueError("strand should be either 'single' or 'both', default is 'both'")

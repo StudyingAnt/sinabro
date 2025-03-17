@@ -1,9 +1,17 @@
+import numpy as np
 from typing import Union
 from Bio.Seq import Seq, MutableSeq
+
+from multiprocessing import Pool
+import os
+import time
 
 from .types.types import MutInfo, MutationRecord
 from . import mutate
 from . import evaluate
+
+from .utils import get_codon, get_amino_acid_from_codon
+from .evaluate import compute_distance
 
 class Trajectory:
     """
@@ -52,7 +60,7 @@ class Trajectory:
         output.append(f"Number of Mutations: {self._length}")
         output.append("Mutation Steps:")
         for i, record in enumerate(self._records):
-            output.append(f"  Step {i}: {record.sequence}")
+            output.append(f"  Step {i}: {record.sequence}\t{record.hgvs_mrna}\t{record.hgvs_aa}\t{record.mut_type}\t{record.note}")
         return "\n".join(output)
 
     def show(self, verbose: bool = True):
@@ -73,7 +81,13 @@ class Trajectory:
             print("\nMutation Steps:")
             for i, record in enumerate(self._records):
                 # Here you could add more detailed info for each step if available
-                print(f"  Step {i}: {record.sequence}")
+                print(f"  Step {i}: {record.sequence}\t{record.hgvs_mrna}\t{record.hgvs_aa}\t{record.mut_type}\t{record.note}")
+
+    def get_records(self):
+        return self._records
+    
+    def get_length(self):
+        return self._length
 
     def add_record(self, record: MutationRecord) -> list:
         """
@@ -151,6 +165,16 @@ class Trajectory:
         # Execute the corresponding mutation function with the provided parameters.
         seq = self._records[-1].sequence
         mutinfo = mutation_methods[method_name](seq, **kwargs)
+
+        old_aa = get_amino_acid_from_codon(get_codon(seq, mutinfo.idx_target))
+        new_aa = get_amino_acid_from_codon(get_codon(mutinfo.new_seq, mutinfo.idx_target))
+
+        if old_aa != new_aa:
+            pos = mutinfo.idx_target//3+1
+            hgvs_aa = f"p.{old_aa}{pos}{new_aa}"
+        else:
+            hgvs_aa = f"."
+
         
         # Check if the mutation process was successful (error code is 0).
         if not mutinfo.e:
@@ -158,6 +182,7 @@ class Trajectory:
             record = MutationRecord(
                 mutinfo.new_seq,
                 hgvs_mrna=mutinfo.hgvs_mrna,
+                hgvs_aa=hgvs_aa,
                 mut_type=mutinfo.mut_type,
                 note=kwargs.get("note", ".")
             )
@@ -166,24 +191,36 @@ class Trajectory:
             # Add error handling logic here if necessary.
             pass
     
-        return self._records
+        return mutinfo
 
     def autofill(self, method, eval_method, **kwargs):
         eval_methods = {
             "max_length": evaluate.eval_maxlen,
-            "nonsynonymous": ,
-            "blosum":
+            "nonsynonymous": evaluate.eval_nonsym,
+            "blosum": evaluate.eval_blosum
         }
 
         if eval_method not in eval_methods:
             raise ValueError("Invalid evaluation method")
 
+        iter_num = 0
         run_flag = True
         while run_flag:
-            eval_methods[eval_method](self._records)
+            # Add mutation
+            mutinfo = self.add_mutated_sequence(method, **kwargs)
+            stop_flag, score = eval_methods[eval_method](self._records, mutinfo, **kwargs)
 
+            if stop_flag:
+                run_flag = False
+            
+            if eval_method == 'blosum' and iter_num > kwargs.get('max_iter', 100):
+                run_flag = False
 
-        print("autofill")
+            if score is not None:
+                self._records[-1].note = f"score: {score}"
+
+            iter_num += 1
+
         
 
     """
@@ -214,3 +251,127 @@ class Trajectory:
             return record
         else:
             raise TypeError("data should be a string, Seq, or MutableSeq object")
+        
+# Module-level helper function for generating a single trajectory.
+def _gen_trajectory_helper(args):
+    self, traj_id, method, eval_method, kwargs = args
+    # Set a different seed for each process to ensure randomness.
+    seed = (int(time.time() * 1000) + traj_id + os.getpid()) % (2**32)
+    np.random.seed(seed)
+    return self.generate_trajectory(traj_id, method, eval_method, **kwargs)
+
+
+class RobustnessComputer:
+    def __init__(self, gene_name, gene_seq):
+        self.gene_name = gene_name
+        self.gene_seq = gene_seq
+
+
+    def generate_trajectory(self, traj_id, method, eval_method, **kwargs):
+        record = MutationRecord(sequence=self.gene_seq)
+        traj = Trajectory(traj_id, record)
+
+        traj.autofill(method, eval_method, **kwargs)
+
+        return traj
+    
+    def generate_trajectories(self, n_traj, method, eval_method, **kwargs):
+        # If 'multiprocessing' is included in kwargs, use its value and remove it.
+        use_multiprocessing = kwargs.pop("multiprocessing", False)
+        
+        if use_multiprocessing:
+            from multiprocessing import Pool
+
+            # Determine the number of CPUs to use: default is available CPUs minus 2 (minimum 1)
+            default_n_cpu = max(1, (os.cpu_count() or 1) - 2)
+            n_cpu = kwargs.pop("n_cpu", default_n_cpu)
+
+            # Prepare argument list for each trajectory.
+            arg_list = [(self, traj_id, method, eval_method, kwargs) for traj_id in range(n_traj)]
+            
+            with Pool(n_cpu) as pool:
+                trajs = pool.map(_gen_trajectory_helper, arg_list)
+            return trajs
+        else:
+            trajs = []
+            for traj_id in range(n_traj):
+                traj = self.generate_trajectory(traj_id, method, eval_method, **kwargs)
+                trajs.append(traj)
+            return trajs
+
+    # def generate_trajectories(self, n_traj, method, eval_method, **kwargs):
+    #     trajs = []
+    #     for traj_id in range(n_traj):
+    #         traj = self.generate_trajectory(traj_id, method, eval_method, **kwargs)
+    #         trajs.append(traj)
+
+    #     return trajs
+    
+    def compute_l_robustness(self, n_sim, method, eval_method, **kwargs):
+        trajs = self.generate_trajectories(n_sim, 
+                                           method=method, 
+                                           eval_method=eval_method, 
+                                           **kwargs)
+        
+        l = []
+        for traj in trajs:
+            l.append(traj.get_length()-1)
+
+        self.trajs = trajs
+
+        return np.array(l).mean()
+    
+    def _compare_protein_sequences(self, seq1, seq2):
+        """
+        Compare the translated amino acid sequences of two DNA sequences.
+        
+        Parameters:
+            seq1 (str): The first DNA sequence.
+            seq2 (str): The second DNA sequence.
+        
+        Returns:
+            bool: True if both translated protein sequences are identical, False otherwise.
+        """
+        # Translate both DNA sequences to protein sequences
+        protein_seq1 = Seq(seq1).translate()
+        protein_seq2 = Seq(seq2).translate()
+    
+        # Return the result of comparing the two protein sequences
+        return protein_seq1 == protein_seq2
+
+    def compute_n_robustness(self, n_sim, method, **kwargs):    
+        kwargs.setdefault('maxlen', kwargs.get('n', 1))
+        trajs = self.generate_trajectories(n_sim, 
+                                           method=method, 
+                                           eval_method='max_length', 
+                                           **kwargs)
+        
+
+        phi_eval = kwargs.get('phi_eval', 'nonsym')
+
+        m = 0
+        for traj in trajs:
+            records = traj.get_records()
+            orig_seq = records[0].sequence[1:-1]
+            last_seq = records[-1].sequence[1:-1]
+            
+            if phi_eval == 'nonsym':
+                if self._compare_protein_sequences(orig_seq, last_seq):
+                    m += 1
+            else:
+                threshold = kwargs.get('threshold', None)
+                if threshold is None:
+                    raise ValueError("threshold must be provided")
+                
+                score = compute_distance(orig_seq, last_seq)
+                
+                if score <= threshold:
+                    m += 1
+
+        robustness = m/n_sim
+
+        self.trajs = trajs
+                
+        return robustness
+
+    
