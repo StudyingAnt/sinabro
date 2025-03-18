@@ -11,7 +11,7 @@ from . import mutate
 from . import evaluate
 
 from .utils import get_codon, get_amino_acid_from_codon
-from .evaluate import compute_distance
+from .evaluate import compute_alignment, compute_distance
 
 class Trajectory:
     """
@@ -280,8 +280,6 @@ class RobustnessComputer:
         use_multiprocessing = kwargs.pop("multiprocessing", False)
         
         if use_multiprocessing:
-            from multiprocessing import Pool
-
             # Determine the number of CPUs to use: default is available CPUs minus 2 (minimum 1)
             default_n_cpu = max(1, (os.cpu_count() or 1) - 2)
             n_cpu = kwargs.pop("n_cpu", default_n_cpu)
@@ -345,9 +343,9 @@ class RobustnessComputer:
                                            method=method, 
                                            eval_method='max_length', 
                                            **kwargs)
-        
 
         phi_eval = kwargs.get('phi_eval', 'nonsym')
+        by_score = kwargs.get('by_score', False)
 
         m = 0
         for traj in trajs:
@@ -358,15 +356,19 @@ class RobustnessComputer:
             if phi_eval == 'nonsym':
                 if self._compare_protein_sequences(orig_seq, last_seq):
                     m += 1
-            else:
-                threshold = kwargs.get('threshold', None)
-                if threshold is None:
-                    raise ValueError("threshold must be provided")
+            elif phi_eval == 'blosum':
+                if by_score:
+                    alignment = compute_alignment(orig_seq, last_seq)
+                    m += alignment.score
+                else:
+                    threshold = kwargs.get('threshold', None)
+                    if threshold is None:
+                        raise ValueError("threshold must be provided")
+
+                    dist = compute_distance(orig_seq, last_seq)
                 
-                score = compute_distance(orig_seq, last_seq)
-                
-                if score <= threshold:
-                    m += 1
+                    if dist <= threshold:
+                        m += 1
 
         robustness = m/n_sim
 

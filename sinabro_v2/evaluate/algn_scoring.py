@@ -6,7 +6,7 @@ from ..types.types import MutInfo, MutationRecord
 from Bio.Align import PairwiseAligner
 from Bio.Align import substitution_matrices
 
-def compute_alignment(seq1, seq2, mode="global", gap_open=-10, gap_extend=-0.5, matrix_name="BLOSUM62"):
+def compute_alignment(seq1, seq2, mode="global", gap_open=-10, gap_extend=-0.5, matrix_name="BLOSUM80"):
     """
     Perform an alignment between two amino acid sequences.
     
@@ -69,8 +69,8 @@ def eval_blosum(records, mutinfo, **kwargs):
     if threshold is None:
         raise ValueError("threshold must be provided")
 
-    ori_seq = records[0].sequence
-    new_seq = records[-1].sequence
+    ori_seq = records[0].sequence[1:-1]
+    new_seq = records[-1].sequence[1:-1]
 
     dist = compute_distance(ori_seq, new_seq)
 
