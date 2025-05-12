@@ -32,12 +32,18 @@ def compute_dnds(records, **kwargs):
     """
     method = kwargs.get("method", "NG86")
 
+    threshold_hit = kwargs.get("threshold_hit", False)
+    if threshold_hit:
+        last_idx = -1
+    else:
+        last_idx = -2
+
     # build trimmed strings
     ref_seq = str(records[0].sequence[1:-4])    # remove first bp + stop
-    mut_seq = str(records[-1].sequence[1:-4])   # remove first bp + stop
+    mut_seq = str(records[last_idx].sequence[1:-4])   # remove first bp + stop
 
     # check stop loss
-    last_codon = str(records[-1].sequence[-4:-1])
+    last_codon = str(records[last_idx].sequence[-4:-1])
     stop_loss = last_codon not in STOP_CODONS
 
     # detect premature in-frame stops in mutant (ignore terminal codon)

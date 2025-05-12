@@ -37,7 +37,7 @@ def compute_alignment(seq1, seq2, mode="global", gap_open=-10, gap_extend=-0.5, 
     return best_alignment
 
 
-def compute_distance(seq1, seq2):
+def compute_align_distance(seq1, seq2):
     """
     Compute the distance between two sequences based on their alignment scores.
     
@@ -72,7 +72,7 @@ def eval_blosum(records, mutinfo, **kwargs):
     ori_seq = records[0].sequence[1:-1]
     new_seq = records[-1].sequence[1:-1]
 
-    dist = compute_distance(ori_seq, new_seq)
+    dist = compute_align_distance(ori_seq, new_seq)
 
     if dist < threshold:
         return False, dist
