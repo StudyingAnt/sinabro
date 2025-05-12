@@ -2,6 +2,7 @@ import numpy as np
 
 from Bio.Data import CodonTable
 from Bio.Seq import Seq, MutableSeq
+from Bio.codonalign.codonseq import CodonSeq
 
 def is_codon_synonymous(codon1, codon2):
     """
