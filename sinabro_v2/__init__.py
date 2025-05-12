@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from . import utils
-from . import types, mutate, evaluate
+from . import types, mutate, evaluate, metrics
 
 from .sinabro import Trajectory, RobustnessComputer
 from .types.types import MutInfo, MutationRecord

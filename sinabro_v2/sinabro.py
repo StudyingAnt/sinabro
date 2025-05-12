@@ -11,7 +11,7 @@ from . import mutate
 from . import evaluate
 
 from .utils import get_codon, get_amino_acid_from_codon
-from .evaluate import compute_alignment, compute_distance
+from .evaluate import compute_alignment, compute_align_distance
 
 class Trajectory:
     """
@@ -365,7 +365,7 @@ class RobustnessComputer:
                     if threshold is None:
                         raise ValueError("threshold must be provided")
 
-                    dist = compute_distance(orig_seq, last_seq)
+                    dist = compute_align_distance(orig_seq, last_seq)
                 
                     if dist <= threshold:
                         m += 1
