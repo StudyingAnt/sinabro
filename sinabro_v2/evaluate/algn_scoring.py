@@ -6,6 +6,16 @@ from ..types.types import MutInfo, MutationRecord
 from Bio.Align import PairwiseAligner
 from Bio.Align import substitution_matrices
 
+def dna_to_aa(seq: str, table: int = 1, to_stop: bool = False) -> str:
+    """
+    Translate a DNA string to an amino-acid string.
+    - table: NCBI translation table ID (1 = standard)
+    - to_stop=False keeps '*' for internal/terminal stops
+    """
+    # Create Seq object and translate; stop_symbol defaults to '*'
+    aa = Seq(seq).translate(table=table, to_stop=to_stop, stop_symbol='*')
+    return str(aa)
+
 def compute_alignment(seq1, seq2, mode="global", gap_open=-10, gap_extend=-0.5, matrix_name="BLOSUM80"):
     """
     Perform an alignment between two amino acid sequences.
@@ -21,6 +31,8 @@ def compute_alignment(seq1, seq2, mode="global", gap_open=-10, gap_extend=-0.5, 
     Returns:
         best_alignment: The alignment result with the highest score.
     """
+    seq1 = dna_to_aa(seq1)
+    seq2 = dna_to_aa(seq2)
     # Create and configure the PairwiseAligner object
     aligner = PairwiseAligner()
     aligner.mode = mode
