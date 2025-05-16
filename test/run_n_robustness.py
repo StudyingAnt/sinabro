@@ -1,3 +1,8 @@
+import warnings
+from Bio import BiopythonExperimentalWarning
+
+warnings.filterwarnings('ignore', category=BiopythonExperimentalWarning)
+
 from pathlib import Path
 import os
 import sys
