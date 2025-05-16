@@ -145,8 +145,8 @@ def _get_idx_motif_from_idx_target(
 
 @preserve_seq_type
 def _mutate_seq_with_mut_type_basic(seq, mut_type):
-    start = 0
-    end = len(seq) - 1
+    start = 1
+    end = len(seq) - 2
 
     idx_motifs = [idx for idx in _get_motif_indices(seq, mut_type) if start <= idx <= end]
     if not idx_motifs:
@@ -170,8 +170,8 @@ def _mutate_seq_with_mut_type_basic(seq, mut_type):
 
 @preserve_seq_type
 def _mutate_seq_with_mut_type_reverse(seq, mut_type):
-    start = 0
-    end = len(seq) - 1
+    start = 1
+    end = len(seq) - 2
 
     rev_mut_type = _reverse_complement_mut_type(mut_type)
     
@@ -179,8 +179,8 @@ def _mutate_seq_with_mut_type_reverse(seq, mut_type):
 
 @preserve_seq_type
 def _mutate_seq_with_mut_type_both(seq, mut_type, strand_bias=0.5):
-    start = 0
-    end = len(seq) - 1
+    start = 1
+    end = len(seq) - 2
 
     # Generate a random number between 0 and 1.
     rand_val = np.random.uniform(0, 1)
@@ -201,8 +201,8 @@ def _mutate_seq_with_mut_type_both(seq, mut_type, strand_bias=0.5):
 
 @preserve_seq_type
 def _mutate_seq_with_mut_type_complex(seq, mut_type, mut_type_bias=None, strand="both", strand_bias=0.5):
-    start = 0
-    end = len(seq) - 1
+    start = 1
+    end = len(seq) - 2
 
 
 
@@ -229,8 +229,8 @@ def mutate_seq_with_mut_type(seq, **kwargs):
     if strand not in ("both", "single"):
         raise ValueError("strand should be either 'single' or 'both', default is 'both'")
 
-    start = 0
-    end = len(seq) - 1
+    start = 1
+    end = len(seq) - 2
 
     # Determine if the mutation type is simple (only single nucleotide IUPAC symbols allowed).
     mut_type_nts = [nt for nt in mut_type if nt not in ["[", ">", "]"]]
