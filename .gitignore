@@ -131,3 +131,5 @@ dmypy.json
 # Test file
 #/sinabro/test.py
 #/sinabro/test.py~
+
+/test/tmp

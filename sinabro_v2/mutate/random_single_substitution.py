@@ -14,8 +14,8 @@ def random_single_substitution(seq, **kwargs):
     The function processes the sequence as a MutableSeq and returns a MutInfo object
     containing the modified sequence and mutation details.
     """
-    start = 0
-    end = len(seq) - 1
+    start = 1
+    end = len(seq) - 2
 
     # Select a random index between start and end (inclusive)
     idx_target = np.random.choice(range(start, end + 1), 1)[0]

@@ -261,11 +261,32 @@ def _gen_trajectory_helper(args):
     return self.generate_trajectory(traj_id, method, eval_method, **kwargs)
 
 
+def _traj_contribution(traj, phi_eval, by_score, threshold):
+    records = traj.get_records()
+    orig_seq = records[0].sequence[1:-1]
+    last_seq = records[-1].sequence[1:-1]
+
+    if phi_eval == 'nonsym':
+        return 1 if traj._compare_protein_sequences(orig_seq, last_seq) else 0
+    elif phi_eval == 'blosum':
+        if by_score:
+            # alignment = compute_alignment(orig_seq, last_seq)
+            dist = compute_align_distance(orig_seq, last_seq)
+            return dist
+            # return alignment.score
+        else:
+            if threshold is None:
+                raise ValueError("threshold must be provided for blosum distance")
+            dist = compute_align_distance(orig_seq, last_seq)
+            return 1 if dist <= threshold else 0
+    else:
+        raise ValueError(f"Unknown phi_eval: {phi_eval}")
+
 class RobustnessComputer:
     def __init__(self, gene_name, gene_seq):
         self.gene_name = gene_name
         self.gene_seq = gene_seq
-
+        self.trajs = {}
 
     def generate_trajectory(self, traj_id, method, eval_method, **kwargs):
         record = MutationRecord(sequence=self.gene_seq)
@@ -315,7 +336,16 @@ class RobustnessComputer:
         for traj in trajs:
             l.append(traj.get_length()-1)
 
-        self.trajs = trajs
+        self.trajs["lrho"] = {
+            "robustness": np.array(l).mean(),
+            "trajs": trajs,
+            "parameters": {
+                "n_sim": n_sim,
+                "method": method,
+                "eval_method": eval_method,
+                **kwargs
+            }
+        }
 
         return np.array(l).mean()
     
@@ -336,44 +366,100 @@ class RobustnessComputer:
     
         # Return the result of comparing the two protein sequences
         return protein_seq1 == protein_seq2
-
-    def compute_n_robustness(self, n_sim, method, **kwargs):    
+    
+    def compute_n_robustness(self, n_sim, method, **kwargs):
+        # set defaults and extract eval params
         kwargs.setdefault('maxlen', kwargs.get('n', 1))
-        trajs = self.generate_trajectories(n_sim, 
-                                           method=method, 
-                                           eval_method='max_length', 
-                                           **kwargs)
-
         phi_eval = kwargs.get('phi_eval', 'nonsym')
         by_score = kwargs.get('by_score', False)
+        threshold = kwargs.get('threshold', None)
 
+        # generate trajectories 
+        trajs = self.generate_trajectories(
+            n_sim,
+            method=method,
+            eval_method='max_length',
+            **kwargs
+        )
+
+        # check whether to use multiprocessing
+        use_mp = kwargs.pop('multiprocessing', False)
         m = 0
-        for traj in trajs:
-            records = traj.get_records()
-            orig_seq = records[0].sequence[1:-1]
-            last_seq = records[-1].sequence[1:-1]
-            
-            if phi_eval == 'nonsym':
-                if self._compare_protein_sequences(orig_seq, last_seq):
-                    m += 1
-            elif phi_eval == 'blosum':
-                if by_score:
-                    alignment = compute_alignment(orig_seq, last_seq)
-                    m += alignment.score
-                else:
-                    threshold = kwargs.get('threshold', None)
-                    if threshold is None:
-                        raise ValueError("threshold must be provided")
 
-                    dist = compute_align_distance(orig_seq, last_seq)
-                
-                    if dist <= threshold:
-                        m += 1
+        if use_mp:
+            # decide number of processes
+            default_n_cpu = max(1, (os.cpu_count() or 1) - 2)
+            n_cpu = kwargs.pop('n_cpu', default_n_cpu)
 
-        robustness = m/n_sim
+            # prepare arguments for each trajectory
+            arg_list = [
+                (traj, phi_eval, by_score, threshold)
+                for traj in trajs
+            ]
+            with Pool(n_cpu) as pool:
+                contributions = pool.starmap(_traj_contribution, arg_list)
+            m = sum(contributions)
 
-        self.trajs = trajs
-                
+        else:
+            # serial 
+            for traj in trajs:
+                m += _traj_contribution((traj, phi_eval, by_score, threshold))
+        
+        if by_score:           
+            robustness = 1/(m/n_sim)
+        else:
+            robustness = m / n_sim
+        #self.trajs = trajs
+
+        self.trajs[f"nrho-{kwargs.get('n', 1)}"] = {
+            "robustness": robustness,
+            "trajs": trajs,
+            "parameters": {
+                "n_sim": n_sim,
+                "method": method,
+                **kwargs
+            }
+        }
+
         return robustness
+
+    # def compute_n_robustness(self, n_sim, method, **kwargs):    
+    #     kwargs.setdefault('maxlen', kwargs.get('n', 1))
+    #     trajs = self.generate_trajectories(n_sim, 
+    #                                        method=method, 
+    #                                        eval_method='max_length', 
+    #                                        **kwargs)
+
+    #     phi_eval = kwargs.get('phi_eval', 'nonsym')
+    #     by_score = kwargs.get('by_score', False)
+
+    #     m = 0
+    #     for traj in trajs:
+    #         records = traj.get_records()
+    #         orig_seq = records[0].sequence[1:-1]
+    #         last_seq = records[-1].sequence[1:-1] 
+            
+    #         if phi_eval == 'nonsym':
+    #             if self._compare_protein_sequences(orig_seq, last_seq):
+    #                 m += 1
+    #         elif phi_eval == 'blosum':
+    #             if by_score:
+    #                 alignment = compute_alignment(orig_seq, last_seq)
+    #                 m += alignment.score
+    #             else:
+    #                 threshold = kwargs.get('threshold', None)
+    #                 if threshold is None:
+    #                     raise ValueError("threshold must be provided")
+
+    #                 dist = compute_align_distance(orig_seq, last_seq)
+                
+    #                 if dist <= threshold:
+    #                     m += 1
+
+    #     robustness = m/n_sim
+
+    #     self.trajs = trajs
+                
+    #     return robustness
 
     
