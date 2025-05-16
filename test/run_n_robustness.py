@@ -7,6 +7,10 @@ scr_path = file_path.parent.parent
 sys.path.insert(0, str(scr_path))
 
 import sinabro_v2 as snbr
+from Bio import SeqIO
+import signal
+import h5py
+from datetime import datetime
 
 data_path = file_path.parent.parent.parent / "data"
 lgenes_fasta_file = data_path / "gencode.v40.pc_transcripts.nopary.cdsplus.longest.fa"
@@ -33,10 +37,13 @@ with h5py.File('lrho_sbs2.h5',
     ds = f['lrho']
     try:
         for seq_record in partial_seq_records:
-            
             transcript_name = seq_record.id.split("|")[4]
             seq = seq_record.seq
-            print(transcript_name)
+
+            # now
+            now = datetime.now()
+            formatted_time = now.strftime("%H:%M:%S.%f")[:-3]
+            print(f"{formatted_time} RUNNING   {transcript_name}")
             rhocom = snbr.RobustnessComputer(transcript_name, seq)
         
             lrho = rhocom.compute_l_robustness(n_sim=1000, 
@@ -52,6 +59,10 @@ with h5py.File('lrho_sbs2.h5',
             # Optional: 즉시 디스크에 flush
             f.flush()
             os.fsync(f.id.get_vfd_handle())
+
+            now = datetime.now()
+            formatted_time = now.strftime("%H:%M:%S.%f")[:-3]
+            print(f"{formatted_time} COMPLETE  {transcript_name}")
     except Exception:
         # 예외 시에도 지금까지 쓴 데이터는 저장
         f.flush()
