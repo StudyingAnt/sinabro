@@ -47,7 +47,7 @@ def compute_dnds(records, **kwargs):
     stop_loss = last_codon not in STOP_CODONS
 
     # detect premature in-frame stops in mutant (ignore terminal codon)
-    has_premature_stop = _has_inframe_stop(mut_seq)
+    # has_premature_stop = _has_inframe_stop(mut_seq)
 
     # run dN/dS; handle possible stop-codon errors gracefully
     try:
@@ -55,10 +55,12 @@ def compute_dnds(records, **kwargs):
         mut_codon = CodonSeq(mut_seq)
         dN, dS = cal_dn_ds(ref_codon, mut_codon, method=method)
         omega = (dN / dS) if dS else np.inf
+        has_premature_stop = False
     except KeyError:
         # Biopython raises KeyError if a stop codon sneaks in
         warnings.warn("Premature stop codon encountered; "
                       "dN/dS set to NaN.", RuntimeWarning)
         dN = dS = omega = np.nan
+        has_premature_stop = True
 
     return dN, dS, omega, has_premature_stop, stop_loss

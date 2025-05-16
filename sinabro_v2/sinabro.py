@@ -286,7 +286,7 @@ class RobustnessComputer:
     def __init__(self, gene_name, gene_seq):
         self.gene_name = gene_name
         self.gene_seq = gene_seq
-
+        self.trajs = {}
 
     def generate_trajectory(self, traj_id, method, eval_method, **kwargs):
         record = MutationRecord(sequence=self.gene_seq)
@@ -336,7 +336,16 @@ class RobustnessComputer:
         for traj in trajs:
             l.append(traj.get_length()-1)
 
-        self.trajs = trajs
+        self.trajs["lrho"] = {
+            "robustness": np.array(l).mean(),
+            "trajs": trajs,
+            "parameters": {
+                "n_sim": n_sim,
+                "method": method,
+                "eval_method": eval_method,
+                **kwargs
+            }
+        }
 
         return np.array(l).mean()
     
@@ -400,7 +409,18 @@ class RobustnessComputer:
             robustness = 1/(m/n_sim)
         else:
             robustness = m / n_sim
-        self.trajs = trajs
+        #self.trajs = trajs
+
+        self.trajs[f"nrho-{kwargs.get('n', 1)}"] = {
+            "robustness": robustness,
+            "trajs": trajs,
+            "parameters": {
+                "n_sim": n_sim,
+                "method": method,
+                **kwargs
+            }
+        }
+
         return robustness
 
     # def compute_n_robustness(self, n_sim, method, **kwargs):    
