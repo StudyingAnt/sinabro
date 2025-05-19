@@ -24,14 +24,14 @@ seq_records = list(SeqIO.parse(lgenes_fasta_file, "fasta"))
 #partial_seq_records = seq_records[:10]
 
 # lrho
-output_file = data_path / 'lrho_sbs2.h5'
+output_file = data_path / 'nrho-1_sbs2.h5'
 with h5py.File(output_file, 
                mode='a',
                libver='latest') as f:
     f.swmr_mode = True
-    if 'lrho' not in f:
+    if 'nrho-1' not in f:
         f.create_dataset(
-            'lrho',             # dataset name
+            'nrho-1',             # dataset name
             shape=(0,),                  # initial length = 0
             maxshape=(None,),            # unlimited resize in first dim
             dtype='float64',             # float 결과
@@ -39,7 +39,7 @@ with h5py.File(output_file,
             compression='gzip',          # gzip 압축
             compression_opts=9           # 압축 레벨 (1~9)
         )
-    ds = f['lrho']
+    ds = f['nrho-1']
     try:
         #for seq_record in partial_seq_records:
         for seq_record in seq_records:
@@ -51,16 +51,25 @@ with h5py.File(output_file,
             formatted_time = now.strftime("%H:%M:%S.%f")[:-3]
             print(f"{formatted_time} RUNNING   {transcript_name}")
             rhocom = snbr.RobustnessComputer(transcript_name, seq)
+
+
+            nrho = rhocom.compute_n_robustness(n_sim=1000, 
+                                    method="signature", 
+                                    mutational_signature='SBS2',
+                                    n = 1,
+                                    phi_eval = 'blosum',
+                                    by_score = True,
+                                    multiprocessing=True)
         
-            lrho = rhocom.compute_l_robustness(n_sim=1000, 
-                                   method="signature", 
-                                   eval_method="blosum", 
-                                   mutational_signature='SBS2', 
-                                   threshold = 20,
-                                   multiprocessing=True)
+            # nrho = rhocom.compute_l_robustness(n_sim=1000, 
+            #                        method="signature", 
+            #                        eval_method="blosum", 
+            #                        mutational_signature='SBS2', 
+            #                        threshold = 20,
+            #                        multiprocessing=True)
             ds.resize((ds.shape[0] + 1,))
             # Append the new float value
-            ds[-1] = lrho
+            ds[-1] = nrho
     
             # Optional: 즉시 디스크에 flush
             f.flush()
