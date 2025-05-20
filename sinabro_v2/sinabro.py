@@ -213,7 +213,7 @@ class Trajectory:
             if stop_flag:
                 run_flag = False
             
-            if eval_method == 'blosum' and iter_num > kwargs.get('max_iter', 100):
+            if eval_method == 'blosum' and iter_num > kwargs.get('max_iter', 20):
                 run_flag = False
 
             if score is not None:
