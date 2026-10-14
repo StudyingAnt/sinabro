@@ -1,57 +1,33 @@
-import re
-from typing import Union
-from Bio.Seq import Seq, MutableSeq
+"""Distances are amino-acid distances after translating the specified CDS."""
+from sinabro.evaluation.policies import protein, alignment_distance
+from sinabro.core import coding_bounds
+from Bio.Seq import Seq
 
-from ..types.types import MutInfo, MutationRecord
-from ..evaluate.algn_scoring import compute_align_distance
+def dna_to_aa(seq, table=1, to_stop=False):
+    coding_bounds(seq, 0, len(seq))
+    return str(Seq(str(seq)).translate(table=table, to_stop=to_stop))
 
-def dna_to_aa(seq: str, table: int = 1, to_stop: bool = False) -> str:
-    """
-    Translate a DNA string to an amino-acid string.
-    - table: NCBI translation table ID (1 = standard)
-    - to_stop=False keeps '*' for internal/terminal stops
-    """
-    # Create Seq object and translate; stop_symbol defaults to '*'
-    aa = Seq(seq).translate(table=table, to_stop=to_stop, stop_symbol='*')
-    return str(aa)
-
-
-def hamming(a: str, b: str) -> int:
-    """
-    Return Hamming distance between equal-length strings a and b.
-    """
-    a = dna_to_aa(a)
-    b = dna_to_aa(b)
+def hamming(a, b):
+    (a, b) = (protein(a), protein(b))
     if len(a) != len(b):
-        raise ValueError("Sequences must be the same length for Hamming distance")
-    return sum(ch1 != ch2 for ch1, ch2 in zip(a, b))
-
+        raise ValueError('proteins must have equal length')
+    return sum((x != y for (x, y) in zip(a, b)))
 
 def compute_distance(records, **kwargs):
-    methods = {
-        "hamming": hamming,
-        "blosum": compute_align_distance
-    }
-
-    method = kwargs.get("method", "hamming")
-    if method not in methods:
-        raise ValueError(
-            f"Unsupported method '{method}'. "
-            f"Choose one of: {', '.join(methods.keys())}"
-        )
-
-    threshold_hit = kwargs.get("threshold_hit", False)
-    if threshold_hit:
-        last_idx = -1
-    else:
-        last_idx = -2
-
-    ref_seq = str(records[0].sequence[1:-1])    
-    mut_seq = str(records[last_idx].sequence[1:-1])   
-        
-    distance = methods[method](ref_seq, mut_seq)
-
-    return distance     
-
-
-
+    if not records:
+        raise ValueError('at least one record is required')
+    include = kwargs.get('threshold_hit', False)
+    if not include and len(records) < 2:
+        raise ValueError('excluding terminal record requires at least two records')
+    start = kwargs.get('cds_start', 1)
+    end = kwargs.get('cds_end', len(records[0].sequence) - 1)
+    (ref, _, _) = coding_bounds(records[0].sequence, start, end)
+    (cur, _, _) = coding_bounds(records[-1 if include else -2].sequence, start, end)
+    if len(ref) != len(cur):
+        raise ValueError('trajectory sequences must have equal length')
+    method = kwargs.get('method', 'hamming')
+    if method == 'hamming':
+        return hamming(ref[start:end], cur[start:end])
+    if method == 'blosum':
+        return alignment_distance(ref[start:end], cur[start:end])
+    raise ValueError('method must be hamming or blosum')

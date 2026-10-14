@@ -1,10 +1,5 @@
-""" Sinabro V2: mutations simulator """
-from __future__ import annotations
-
-from . import utils
-from . import types, mutate, evaluate, metrics
-
+"""Legacy v2 import path, using the verified shared engine."""
+from . import utils, types, mutate, evaluate, metrics
 from .sinabro import Trajectory, RobustnessComputer
 from .types.types import MutInfo, MutationRecord
-
-__version__ = "2.0.0"
+from sinabro import EvaluationResult, ProteinIdentity, BlosumDistance, __version__

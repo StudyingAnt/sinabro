@@ -1,66 +1,34 @@
-import re
-from typing import Union
-from Bio.Seq import Seq, MutableSeq
+"""Optional pairwise sequence dN/dS; this is not tumor-selection inference."""
+import numpy as np
+from sinabro.core import STOP_CODONS, coding_bounds, dna
 
-from ..types.types import MutInfo, MutationRecord
-
-from Bio.codonalign.codonseq import CodonSeq, cal_dn_ds
-
-import numpy as np 
-import warnings
-
-# constant: standard DNA stop codons
-STOP_CODONS = {"TAA", "TAG", "TGA"}
-STOP_RE = re.compile(r"TAA|TAG|TGA") 
-
-def _has_inframe_stop(seq_without_terminal: str) -> bool:
-    """
-    Return True if any in-frame stop codon (TAA/TAG/TGA) exists
-    **before** the terminal codon.
-    """
-    m = STOP_RE.search(seq_without_terminal)
-    # no stop found → False
-    if m is None:
-        return False
-    # check reading frame (index % 3 == 0)
-    return (m.start() % 3) == 0
+def _has_inframe_stop(seq_without_terminal):
+    text = dna(seq_without_terminal)
+    if len(text) % 3:
+        raise ValueError('CDS must have complete codons')
+    return any((text[i:i + 3] in STOP_CODONS for i in range(0, len(text), 3)))
 
 def compute_dnds(records, **kwargs):
-    """
-    Compute pairwise dN, dS, and ω (dN/dS) between the first and last
-    sequence in a list of MutationRecord object.
-    """
-    method = kwargs.get("method", "NG86")
-
-    threshold_hit = kwargs.get("threshold_hit", False)
-    if threshold_hit:
-        last_idx = -1
-    else:
-        last_idx = -2
-
-    # build trimmed strings
-    ref_seq = str(records[0].sequence[1:-4])    # remove first bp + stop
-    mut_seq = str(records[last_idx].sequence[1:-4])   # remove first bp + stop
-
-    # check stop loss
-    last_codon = str(records[last_idx].sequence[-4:-1])
-    stop_loss = last_codon not in STOP_CODONS
-
-    # detect premature in-frame stops in mutant (ignore terminal codon)
-    # has_premature_stop = _has_inframe_stop(mut_seq)
-
-    # run dN/dS; handle possible stop-codon errors gracefully
-    try:
-        ref_codon = CodonSeq(ref_seq)
-        mut_codon = CodonSeq(mut_seq)
-        dN, dS = cal_dn_ds(ref_codon, mut_codon, method=method)
-        omega = (dN / dS) if dS else np.inf
-        has_premature_stop = False
-    except KeyError:
-        # Biopython raises KeyError if a stop codon sneaks in
-        warnings.warn("Premature stop codon encountered; "
-                      "dN/dS set to NaN.", RuntimeWarning)
-        dN = dS = omega = np.nan
-        has_premature_stop = True
-
-    return dN, dS, omega, has_premature_stop, stop_loss
+    if not records:
+        raise ValueError('at least one record is required')
+    include = kwargs.get('threshold_hit', False)
+    if not include and len(records) < 2:
+        raise ValueError('excluding terminal record requires at least two records')
+    start = kwargs.get('cds_start', 1)
+    end = kwargs.get('cds_end', len(records[0].sequence) - 1)
+    (ref, _, _) = coding_bounds(records[0].sequence, start, end)
+    (cur, _, _) = coding_bounds(records[-1 if include else -2].sequence, start, end)
+    (ref, cur) = (ref[start:end], cur[start:end])
+    if len(ref) != len(cur) or len(ref) < 6 or ref[-3:] not in STOP_CODONS:
+        raise ValueError('pairwise dN/dS requires equal-length CDS with a reference terminal stop and at least one sense codon')
+    stoploss = cur[-3:] not in STOP_CODONS
+    (ref, cur) = (ref[:-3], cur[:-3])
+    premature = _has_inframe_stop(cur)
+    if premature or _has_inframe_stop(ref):
+        return (np.nan, np.nan, np.nan, premature, stoploss)
+    from Bio.codonalign.codonseq import CodonSeq, cal_dn_ds
+    (dn, ds) = cal_dn_ds(CodonSeq(ref), CodonSeq(cur), method=kwargs.get('method', 'NG86'))
+    if not np.isfinite(dn) or not np.isfinite(ds) or dn < 0 or ds < 0:
+        return np.nan, np.nan, np.nan, premature, stoploss
+    omega = dn / ds if ds > 0 else np.inf if dn > 0 else np.nan
+    return (dn, ds, omega, premature, stoploss)
