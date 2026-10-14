@@ -1,8 +1,8 @@
 import unittest
 import numpy as np
 from sinabro import MutationRecord
-from sinabro_v2.metrics.dist import hamming, compute_distance
-from sinabro_v2.metrics.dnds import _has_inframe_stop, compute_dnds
+from sinabro.metrics import hamming, compute_distance, compute_dnds
+from sinabro.metrics.dnds import _has_inframe_stop
 
 class MetricsTests(unittest.TestCase):
 

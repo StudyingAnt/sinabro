@@ -1,37 +1,10 @@
 import unittest
 import math
 import numpy as np
-import sinabro
-import sinabro.sinabro as legacy
-import sinabro_v2 as v2
 from sinabro import RobustnessComputer
 SEQ = 'TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT'
 
 class RobustnessTests(unittest.TestCase):
-
-    def test_original_import_exposes_trajectory(self):
-        self.assertIs(sinabro.Trajectory, legacy.Trajectory)
-
-    def test_legacy_signature_keyword_names(self):
-        from sinabro.core import signature_path
-        from sinabro._mutate._mutate_seq_with_mutational_signature import make_full_mutational_signature, compute_mut_prob_matrix
-        matrix = make_full_mutational_signature(input_file_path=signature_path(), column='SBS2')
-        p = compute_mut_prob_matrix(seq=SEQ, full_mutational_signature=matrix)
-        self.assertAlmostEqual(p.sum(), 1)
-
-    def test_v2_record_and_trajectory(self):
-        t = v2.Trajectory(0, v2.MutationRecord(SEQ), seed=42)
-        t.autofill('random', 'max_length', maxlen=3)
-        self.assertEqual(t.get_length(), 3)
-        self.assertEqual(len(t.get_records()), 4)
-
-    def test_v2_motif_api(self):
-        result = v2.mutate.mutate_seq_with_mut_type('ATCAT', mut_type='T[C>T]A', seed=1)
-        self.assertEqual(result.new_seq, 'ATTAT')
-
-    def test_v2_weighted_motif_api(self):
-        result = v2.mutate.mutate_seq_with_mut_types('ATCAT', ['T[C>T]A'], [1], seed=1)
-        self.assertEqual(result.new_seq, 'ATTAT')
 
     def test_stopping_time_is_mean_preterminal_length(self):
         r = RobustnessComputer('x', SEQ, seed=42)

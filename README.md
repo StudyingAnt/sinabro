@@ -1,129 +1,98 @@
-# Sinabro — sequential mutation trajectories
+# Sinabro
 
-Sinabro applies one single-base substitution at a time to a coding sequence, evaluates the resulting sequence, and records the trajectory. It supports random substitutions, context-specific motifs, weighted motif lists, and COSMIC SBS profiles.
+![Sinabro](docs/assets/sinabro.png)
 
-The package is separate from the manuscript analysis pipeline at [Simple_robustness_analysis_of_cds](https://github.com/StudyingAnt/Simple_robustness_analysis_of_cds). GENCODE/Bat1K preprocessing, biological comparisons, and manuscript figures belong to that pipeline.
+**Sequential mutation simulation for coding-sequence robustness.**
+
+Sinabro applies one single-base substitution at a time, evaluates the resulting protein, and records the mutation trajectory. Mutation models include random substitutions, sequence motifs, and COSMIC SBS signatures.
+
+This repository is the package accompanying *Human and bats genome robustness under COSMIC mutational signatures*. Version **3.0.0** provides a single `sinabro` package with explicit coordinates, reproducible random streams, and automated tests. It is a refactored implementation for further research and manuscript revision; the preserved historical source remains the reference for earlier calculations. See [reproducibility and version provenance](docs/reproducibility.md) before replacing a historical analysis.
 
 ## Install
 
-Python 3.9 or later:
+Python 3.9 or later, NumPy, and Biopython are required. From this checkout:
 
 ```bash
-python -m pip install -e .
+python -m pip install .
 ```
 
-Runtime dependencies are NumPy and Biopython. The five COSMIC v3.3.1 SBS resource tables are included in the installed package. `packages.txt` records an older development environment; it is not the minimal installation specification.
+For development, use `python -m pip install -e ".[analysis]"`. The optional `analysis` extra supplies SciPy for the pairwise dN/dS functionality.
 
-## Protein-identity neutrality: the original RUMS criterion
+For conda, the included environment uses the recorded Python 3.9.15 / NumPy 1.21.6 / Biopython 1.79 versions:
 
-CDS-plus input contains one context nucleotide before and after the CDS. The default coding slice is `sequence[1:-1]`. Coordinates are zero based and ends are exclusive.
+```bash
+conda env create -f environment.yml
+conda activate sinabro
+python -m pip install --no-build-isolation -e ".[analysis]"
+```
+
+The environment specification records dependencies; it does not by itself reproduce manuscript results.
+
+## Quick start
 
 ```python
 import sinabro as snbr
 
+# CDS-plus: one context nucleotide on each side of the coding sequence.
 sequence = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
-trajectory = snbr.Trajectory(id="example", data=sequence, seed=42)
+trajectory = snbr.Trajectory("example", sequence, seed=42)
 trajectory.autofill(
     condition="nonsynonymous",
     method="signature",
     mutational_signature="SBS2",
 )
-print(trajectory.terminal_reason)
-print(trajectory.accepted_steps)  # 0 when the first substitution is nonsynonymous
+print(trajectory.accepted_steps)
 trajectory.show()
 ```
 
-The synonymous count excludes the terminal nonsynonymous event. RUMS is its mean across complete independent trajectories. This is a sequence-level proxy, not a direct measurement of fitness or function.
+The default criterion stops at the first protein-sequence change. For complete trajectories, `accepted_steps` excludes that final event, and its mean is the original RUMS measure. The default coding slice is `sequence[1:-1]`; plain CDS inputs require explicit coordinates.
 
-```python
-computer = snbr.RobustnessComputer("example", sequence, seed=42)
-rums = computer.compute_l_robustness(
-    n_sim=100, method="signature", eval_method="nonsynonymous",
-    mutational_signature="SBS2",
-)
-print(rums, computer.trajs["lrho"]["mc_se"])
-```
-
-## BLOSUM neutrality: tolerate changes below a score threshold
+BLOSUM evaluation can tolerate protein changes below an explicit threshold:
 
 ```python
 trajectory = snbr.Trajectory("example", sequence, seed=42)
 trajectory.autofill(
-    condition="evaluation", method="signature", mutational_signature="SBS2",
-    measure="blosum", threshold=20, matrix_name="BLOSUM80",
-    stop_policy="score",
+    condition="evaluation", method="signature",
+    mutational_signature="SBS2", measure="blosum", threshold=20,
 )
-print(trajectory.evaluation, trajectory.score, trajectory.accepted_steps)
 ```
 
-The score distance is `alignment(original protein, original protein) - alignment(original protein, current protein)`. Global alignment, gap-open -10, gap-extension -0.5, and BLOSUM80 are the defaults. Termination occurs at distance **greater than or equal to** the positive threshold, measured against the original CDS at every step. An intermediate missense substitution may be tolerated. These accepted steps are **criterion-neutral steps**, not necessarily synonymous substitutions; do not label their mean as the original RUMS.
+BLOSUM results are criterion-neutral stopping times. They need separate labels from synonymous RUMS and do not establish functional neutrality experimentally.
 
-`stop_policy="score"` preserves score-based treatment of stop-gain/loss; `"terminate"` stops immediately when a stop position changes. This is an explicit modeling choice. BLOSUM similarity is not experimental evidence that a mutation is functionally neutral.
-
-## Other mutation methods
-
-```python
-trajectory = snbr.Trajectory("example", sequence, seed=42)
-trajectory.autofill(condition="max_length", max_length=10, method="random")
-
-trajectory = snbr.Trajectory("example", sequence, seed=42)
-trajectory.autofill(condition="nonsynonymous", method="mut_type",
-                    mut_type="T[C>T]", strand="both")
-
-trajectory = snbr.Trajectory("example", sequence, seed=42)
-trajectory.autofill(condition="nonsynonymous", method="mut_types",
-                    mut_types=["AA[C>T]", "AC[C>T]"], mut_type_probs=[0.6, 0.4])
-```
-
-IUPAC motifs and overlapping motif opportunities are supported. Weighted motifs and signatures use per-opportunity weights on the current sequence; their realized channel fractions depend on available sequence contexts. The algorithm permits repeated hits and back mutations. `strand_bias` splits weight between the supplied orientation and its reverse complement; default 0.5 is symmetric.
-
-## Custom evaluations and plain CDS
-
-```python
-from sinabro import EvaluationResult
-
-def custom(original_cds, current_cds, mutation):
-    # Replace this demonstration rule with a scientifically justified criterion.
-    return EvaluationResult(stop=current_cds != original_cds, reason="custom")
-
-trajectory = snbr.Trajectory("plain", "ATGGCCTAA", seed=42,
-                             cds_start=0, cds_end=9)
-trajectory.autofill(condition="evaluation", method="random", evaluator=custom)
-```
-
-The callback receives CDS strings without flanks and the `MutInfo` event. It returns a bool or an `EvaluationResult`. Signature sampling needs a complete trinucleotide context and therefore cannot target the first/last base of a plain CDS lacking flanks. Use CDS-plus when all CDS positions must be eligible.
-
-## Termination and reproducibility
-
-`terminal_reason` distinguishes biological criterion termination, fixed length, unavailable events, and the safety cap. `accepted_steps` is `None` for incomplete or fixed-length paths. `compute_l_robustness` refuses a stopping-time mean when any path is incomplete and retains the paths in `computer.trajs["lrho"]` for inspection. It does not silently drop censored paths.
-
-A default `max_steps=10000` bounds execution; increasing it is a scientific/run configuration choice. `max_length` is a total target trajectory length. `max_length=0` records the original state only. Use `compute_n_robustness` for fixed-n endpoint protein identity; endpoint identity includes trajectories that changed and later returned to the original phenotype.
-
-Supply `seed` to `Trajectory` or `RobustnessComputer`, or supply a NumPy `Generator` to `Trajectory`. Mutation functions never reseed from time. Independent trajectory streams are derived from `SeedSequence`. The same seed and configuration produce identical serial/parallel paths; also record NumPy/Biopython versions. A completed stopping-time trajectory cannot be continued without removing its terminal record or constructing a fresh trajectory.
-
-## Portable CLI and synthetic demonstration
+## Run from the command line
 
 ```bash
 sinabro --input examples/cdsplus.fa --output results/identity.csv \
   --signatures SBS2 SBS13 --n-trajectories 100 --seed 42
-sinabro --input examples/cdsplus.fa --output results/blosum.csv \
-  --signatures SBS2 SBS13 --n-trajectories 100 --seed 42 \
-  --evaluation blosum --threshold 20
 python examples/compare_criteria.py
 ```
 
-The CLI writes per-trajectory data and a sibling `.manifest.json` with input/profile/output hashes, versions, configuration, and completion counts. IDs determine stable seed streams independently of FASTA ordering. Output files are never overwritten. These examples are synthetic package checks, not independent replications of the human/bat manuscript.
+The CLI writes trajectory data and a manifest containing input hashes, settings, dependency versions, and completion counts. The included FASTA is synthetic demonstration data.
 
-## Tests and migration
+## Repository guide
+
+| Path | Purpose |
+|---|---|
+| `sinabro/` | Installable package: mutation engine, evaluation policies, metrics |
+| `sinabro/data/` | Packaged COSMIC v3.3.1 SBS tables |
+| `examples/` | Small executable examples and synthetic input |
+| `tests/` | Automated package tests |
+| `docs/` | API, scientific model, and reproducibility records |
+| `environment.yml` | Conda environment using the recorded dependency versions |
+
+Read the [API guide](docs/api.md), [algorithm](docs/algorithm.md), [testing guide](docs/testing.md), and [change log](CHANGELOG.md). Historical import changes are documented in [migration notes](docs/migration.md).
+
+## Test
 
 ```bash
+python -m pip install -e ".[analysis]"
 python -m unittest discover -s tests -v
 ```
 
-The standard-library test suite uses exhaustive codon translation oracles, hand-computed probabilities, boundary/termination checks, deterministic paths, serial/parallel comparisons, and CLI runs. `test/` retains historical development scripts and the notebook; `tests/` is the automated suite. CI is configured for Linux and Windows, Python 3.9 and 3.12. Local validation does not imply that remote CI has run.
+The suite covers all 64 codons and their nine possible substitutions, mutation probabilities, boundaries, stopping rules, metrics, serial/parallel reproducibility, and the CLI. GitHub Actions runs package checks on Linux and Windows.
 
-Both `import sinabro` and `import sinabro.sinabro` expose the verified engine. `sinabro_v2` is retained as a compatibility facade. See [migration notes](docs/migration.md) for deliberate behavior corrections and [algorithm](docs/algorithm.md) for the probability and neutrality definitions.
+## Manuscript analysis and license
 
-## License
+The separate [manuscript analysis repository](https://github.com/StudyingAnt/Simple_robustness_analysis_of_cds) contains preprocessing and biological analyses. Package tests and synthetic examples are distinct from reproducing the human/bat figures.
 
-BSD-3-Clause, copyright Joon-Hyun Song. See [LICENSE](LICENSE).
+BSD-3-Clause. Copyright Joon-Hyun Song. See [LICENSE](LICENSE).

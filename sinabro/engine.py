@@ -54,7 +54,7 @@ class Trajectory:
             print(f'ID: {self._id}\nTrajectory length: {self._length}')
 
     def append(self, seq, hgvs_mrna='.', mut_type='.', note='.'):
-        """Append exactly one in-CDS substitution and synchronize compatibility arrays."""
+        """Append exactly one in-CDS substitution and synchronize trajectory arrays."""
         text = dna(seq)
         previous = str(self._records[-1].sequence)
         if len(text) != self._seq_length:

@@ -132,4 +132,4 @@ dmypy.json
 #/sinabro/test.py
 #/sinabro/test.py~
 
-/test/tmp
+/results/

@@ -1,5 +1,5 @@
 # Usage principles
 
-Use `from sinabro import Trajectory, RobustnessComputer` or `import sinabro as snbr`.
+Use `import sinabro as snbr` or `from sinabro import Trajectory, RobustnessComputer`.
 
-Input coordinates, neutrality criteria and incomplete trajectories are scientific modeling choices. See the top-level README for executable examples, algorithm.md for the sampling model, and migration.md for legacy behavior changes. The package tests are independent of the manuscript's biological analyses.
+[API and CLI examples](api.md) explain inputs and use. [Algorithm](algorithm.md) defines sampling and evaluation. [Reproducibility](reproducibility.md) distinguishes the historical source and the refactored edition. Package tests are independent of manuscript biological analyses.

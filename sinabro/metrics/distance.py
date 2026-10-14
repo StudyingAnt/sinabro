@@ -1,6 +1,6 @@
 """Distances are amino-acid distances after translating the specified CDS."""
-from sinabro.evaluation.policies import protein, alignment_distance
-from sinabro.core import coding_bounds
+from ..evaluation.policies import protein, alignment_distance
+from ..core import coding_bounds
 from Bio.Seq import Seq
 
 def dna_to_aa(seq, table=1, to_stop=False):

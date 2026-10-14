@@ -4,7 +4,6 @@ import numpy as np
 from Bio.Seq import Seq, MutableSeq
 from sinabro import Trajectory, MutationRecord
 from sinabro.core import get_codon, dna
-from sinabro._helper._helper import _get_idx_from_hgvs_mrna
 
 class CoordinateTests(unittest.TestCase):
 
@@ -67,13 +66,6 @@ class CoordinateTests(unittest.TestCase):
     def test_lowercase_and_input_types(self):
         for seq in ['aatgt', Seq('aatgt'), MutableSeq('aatgt')]:
             self.assertEqual(str(Trajectory('x', seq)._original_seq), 'AATGT')
-
-    def test_hgvs_parser(self):
-        self.assertEqual(_get_idx_from_hgvs_mrna('c.3G>C'), 3)
-        self.assertEqual(_get_idx_from_hgvs_mrna('c.3G>C', offset=0), 2)
-        for invalid in ['c.0G>C', '.', 'c.3del']:
-            with self.assertRaises(ValueError):
-                _get_idx_from_hgvs_mrna(invalid)
 
     def test_append_pop_invariants(self):
         t = Trajectory('x', 'AGCTT')

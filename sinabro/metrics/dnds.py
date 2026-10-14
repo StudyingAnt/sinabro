@@ -1,6 +1,6 @@
 """Optional pairwise sequence dN/dS; this is not tumor-selection inference."""
 import numpy as np
-from sinabro.core import STOP_CODONS, coding_bounds, dna
+from ..core import STOP_CODONS, coding_bounds, dna
 
 def _has_inframe_stop(seq_without_terminal):
     text = dna(seq_without_terminal)
