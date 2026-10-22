@@ -1,45 +1,39 @@
-# Reproducibility and scientific provenance
+# Scientific provenance and reproducibility
 
-## Manuscript and package
+## Package and manuscript analyses
 
-The associated manuscript is *Human and bats genome robustness under COSMIC mutational signatures*. Sinabro supplies the sequential mutation simulator. The [separate analysis repository](https://github.com/StudyingAnt/Simple_robustness_analysis_of_cds) supplies preprocessing and biological analyses.
+Sinabro 3.0.0 implements the mutation → evaluation → trajectory workflow used by the associated [human/bat manuscript analysis repository](https://github.com/StudyingAnt/Simple_robustness_analysis_of_cds). The scientific source and signature tables are unchanged by the publication-oriented repository organization.
 
-Version 3.0.0 is the consolidated, refactored implementation for ongoing research and revision. The mutation → evaluation → trajectory workflow is retained, but coordinate, sampling, termination, and random-state defects have been corrected. Therefore this edition must not be described as the exact code that produced historical manuscript outputs. Full old/new biological-output validation remains a separate research task.
-
-The historical repository snapshot is commit `4c06417c2df7a12dfac7858540b2947054d29830`, available on [backup/before-cleanup-2026-10-14](https://github.com/StudyingAnt/sinabro/tree/backup/before-cleanup-2026-10-14). This preserves the source as received; the correspondence between every manuscript result and a specific historical commit still needs confirmation from the analysis records.
+The analysis workflows have been checked on the full human COSMIC campaign (73,214 transcripts × 79 signatures × 1,000 paths), two bat COSMIC cohorts, and six experimental enzyme profiles on all three species. Independent sampler checks, downstream numerical comparisons and the BRCA1 example are documented in the [analysis validation reference](https://github.com/StudyingAnt/Simple_robustness_analysis_of_cds/blob/main/docs/validation_reference.md). These analyses use the corrected implementation; they do not establish identity with unrecovered historical random streams.
 
 ## Recorded environment
 
-The [original conda package listing](reproducibility/original-packages.txt) records:
-
-| Component | Recorded version |
-|---|---|
+| Component | Version |
+| --- | --- |
 | Python | 3.9.15 |
 | NumPy | 1.21.6 |
 | Biopython | 1.79 |
 | SciPy | 1.8.1 |
 
-The root `environment.yml` specifies these four scientific/runtime versions. The original listing contains additional tools from the broader research environment and is a provenance record, not the package's minimal dependency list. No conda channel release of Sinabro is claimed; conda installs the dependencies and pip installs this checkout.
+The package `environment.yml` records these dependencies. The analysis repository additionally pins Matplotlib 3.6.2. The [historical environment listing](reproducibility/original-packages.txt) is retained as source provenance; it contains tools beyond the package's minimal dependencies. Conda installs dependencies and pip installs this checkout; a published Conda channel package is not assumed.
 
-The preceding refactor's complete package suite passed in the recorded Python/NumPy/Biopython environment. Separate Biopython 1.79, 1.80, and 1.81 checks found identical numeric payloads for 500 synthetic trajectories per environment, codon translation, BLOSUM80 scores, and selected pairwise dN/dS examples. This evidence concerns the tested cases, not all biological inputs or future library releases. The consolidation is retested as documented in [testing](testing.md).
+Biopython 1.79, 1.80 and 1.81 checks gave identical numeric payloads for the tested 500 synthetic trajectories per environment, translations, BLOSUM80 scores and selected pairwise dN/dS examples. This evidence is limited to those cases and versions. Use the pinned analysis environment for manuscript reproduction.
 
-## Criteria and output interpretation
+## Scientific criteria
 
-Protein identity is the strict criterion used for synonymous robustness. BLOSUM distance is a relaxed criterion that accepts some protein changes; its stopping time must be reported separately from synonymous RUMS. Both are sequence-level modeling criteria rather than experimental measurements of fitness. See [algorithm](algorithm.md) for thresholds and stopping behavior.
+Protein identity defines synonymous RUMS. BLOSUM distance accepts some protein changes below an explicit alignment-score threshold and is reported as a separate criterion-neutral stopping time. Neither is an experimental assay of fitness. Incomplete paths have no complete robustness estimate and must not be silently averaged. See [the algorithm](algorithm.md).
 
-Before using the refactor to revise manuscript results, compare a fixed biological subset against the historical implementation with identical input sequences, signature tables, preprocessing, run counts, and evaluation definitions. Record differences caused by package corrections separately from those caused by a relaxed criterion.
+## Historical source
 
-## Archive each scientific run
+The preserved earlier implementation is commit `4c06417c2df7a12dfac7858540b2947054d29830`, available on [backup/before-cleanup-2026-10-14](https://github.com/StudyingAnt/sinabro/tree/backup/before-cleanup-2026-10-14). Coordinate, opportunity-sampling, termination and random-state corrections distinguish the present edition; [migration notes](migration.md) describe them. The current package must not be labelled as the exact executable that generated all historical figures.
 
-Record the source commit and package version, Python/NumPy/Biopython/SciPy versions as applicable, input FASTA hash, profile hash, CDS bounds, seed, trajectory count, evaluation threshold, stop policy, and incomplete-path counts. The CLI generates a manifest alongside its CSV. Store the analysis-script commit and preprocessing parameters with downstream results as well.
-
-## Restore historical code separately
-
-An independent checkout keeps the current package intact:
+The publication cleanup snapshot is available on [backup/before-paper-release-2026-10-21](https://github.com/StudyingAnt/sinabro/tree/backup/before-paper-release-2026-10-21). Historical code can be inspected separately without changing the current checkout:
 
 ```bash
 git fetch origin
 git worktree add ../sinabro_original origin/backup/before-cleanup-2026-10-14
 ```
 
-Run it in a separate environment and retain the original input/output files. Historical scripts and notebooks are preserved in that Git history, rather than included in the current installable package.
+## Record each scientific run
+
+Preserve the package and analysis commits, source-file fingerprints, Python/scientific-library versions, input FASTA and signature hashes, CDS bounds, seeds, path counts, evaluation settings, stop policy and incomplete-path counts. The CLI writes a manifest beside its output. Use a new output directory for each distinct scientific configuration and retain the resolved environment with the campaign.

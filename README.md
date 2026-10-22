@@ -4,62 +4,60 @@
 
 **Sequential mutation simulation for coding-sequence robustness.**
 
-Sinabro applies one single-base substitution at a time, evaluates the resulting protein, and records the mutation trajectory. Mutation models include random substitutions, sequence motifs, and COSMIC SBS signatures.
+Sinabro applies one nucleotide substitution at a time, evaluates the translated coding sequence, and records the mutation trajectory. It supports random substitutions, motif preferences and COSMIC SBS signatures, with protein-identity and BLOSUM80 evaluation criteria.
 
-This repository is the package accompanying *Human and bats genome robustness under COSMIC mutational signatures*. Version **3.0.0** provides a single `sinabro` package with explicit coordinates, reproducible random streams, and automated tests. It is a refactored implementation for further research and manuscript revision; the preserved historical source remains the reference for earlier calculations. See [reproducibility and version provenance](docs/reproducibility.md) before replacing a historical analysis.
+This is the **Sinabro 3.0.0** package accompanying *Human and bats genome robustness under COSMIC mutational signatures*. The separate [manuscript analysis repository](https://github.com/StudyingAnt/Simple_robustness_analysis_of_cds) contains reference downloads, human/bat simulations, statistical analyses and figure workflows.
 
-## Install
+## Installation
 
-Python 3.9 or later, NumPy, and Biopython are required. From this checkout:
+Python 3.9 or later, NumPy and Biopython are required. Install from this repository:
 
 ```bash
+git clone https://github.com/StudyingAnt/sinabro.git
+cd sinabro
 python -m pip install .
 ```
 
-For development, use `python -m pip install -e ".[analysis]"`. The optional `analysis` extra supplies SciPy for the pairwise dN/dS functionality.
-
-For conda, the included environment uses the recorded Python 3.9.15 / NumPy 1.21.6 / Biopython 1.79 versions:
+For the recorded scientific-library environment:
 
 ```bash
-conda env create -f environment.yml
+conda env create --file environment.yml
 conda activate sinabro
-python -m pip install --no-build-isolation -e ".[analysis]"
+python -m pip install --no-deps --no-build-isolation .
 ```
 
-The environment specification records dependencies; it does not by itself reproduce manuscript results.
+The Conda specification uses Python 3.9.15, NumPy 1.21.6, Biopython 1.79 and SciPy 1.8.1. Conda supplies the dependencies and pip installs the package. For manuscript reproduction, use the [analysis environment and setup guide](https://github.com/StudyingAnt/Simple_robustness_analysis_of_cds/blob/main/CONDA_SETUP.md), which also pins plotting dependencies.
+
+The optional `analysis` extra supplies SciPy for pairwise dN/dS calculations: `python -m pip install ".[analysis]"`. Editable installation is available for package development; a regular installation is recommended when the checkout shares a parent directory with an analysis repository.
 
 ## Quick start
 
 ```python
-import sinabro as snbr
+from sinabro import Trajectory, RobustnessComputer
 
-# CDS-plus: one context nucleotide on each side of the coding sequence.
+# One context nucleotide on either side of the CDS.
 sequence = "TATGCTGACTCGGTCATCGATCGGTTCTCATTGAT"
-trajectory = snbr.Trajectory("example", sequence, seed=42)
+trajectory = Trajectory("example", sequence, seed=42)
 trajectory.autofill(
     condition="nonsynonymous",
     method="signature",
     mutational_signature="SBS2",
 )
 print(trajectory.accepted_steps)
-trajectory.show()
-```
 
-The default criterion stops at the first protein-sequence change. For complete trajectories, `accepted_steps` excludes that final event, and its mean is the original RUMS measure. The default coding slice is `sequence[1:-1]`; plain CDS inputs require explicit coordinates.
-
-BLOSUM evaluation can tolerate protein changes below an explicit threshold:
-
-```python
-trajectory = snbr.Trajectory("example", sequence, seed=42)
-trajectory.autofill(
-    condition="evaluation", method="signature",
-    mutational_signature="SBS2", measure="blosum", threshold=20,
+computer = RobustnessComputer("example", sequence, seed=42)
+rums = computer.compute_l_robustness(
+    n_sim=100,
+    method="signature",
+    eval_method="nonsynonymous",
+    mutational_signature="SBS2",
 )
+print(rums)
 ```
 
-BLOSUM results are criterion-neutral stopping times. They need separate labels from synonymous RUMS and do not establish functional neutrality experimentally.
+Under protein identity, `accepted_steps` counts neutral substitutions before the first protein-sequence change; its mean across complete trajectories is RUMS. The default CDS is `sequence[1:-1]`. Plain CDS inputs require explicit bounds. BLOSUM80 supplies a relaxed sequence criterion and must be labelled separately from synonymous robustness. These criteria are not experimental measurements of fitness or function.
 
-## Run from the command line
+## Command-line use
 
 ```bash
 sinabro --input examples/cdsplus.fa --output results/identity.csv \
@@ -67,32 +65,28 @@ sinabro --input examples/cdsplus.fa --output results/identity.csv \
 python examples/compare_criteria.py
 ```
 
-The CLI writes trajectory data and a manifest containing input hashes, settings, dependency versions, and completion counts. The included FASTA is synthetic demonstration data.
+The CLI writes trajectory results and a manifest with input hashes, settings, dependency versions and completion counts. Example sequences are synthetic. [API and CLI documentation](docs/api.md) describes BLOSUM settings, coding coordinates and custom evaluation policies.
 
-## Repository guide
+## Documentation and tests
 
-| Path | Purpose |
-|---|---|
-| `sinabro/` | Installable package: mutation engine, evaluation policies, metrics |
-| `sinabro/data/` | Packaged COSMIC v3.3.1 SBS tables |
-| `examples/` | Small executable examples and synthetic input |
-| `tests/` | Automated package tests |
-| `docs/` | API, scientific model, and reproducibility records |
-| `environment.yml` | Conda environment using the recorded dependency versions |
-
-Read the [API guide](docs/api.md), [algorithm](docs/algorithm.md), [testing guide](docs/testing.md), and [change log](CHANGELOG.md). Historical import changes are documented in [migration notes](docs/migration.md).
-
-## Test
+| Resource | Contents |
+| --- | --- |
+| [API guide](docs/api.md) | Python and command-line examples |
+| [Algorithm](docs/algorithm.md) | Mutation opportunities, evaluation and stopping rules |
+| [Scientific provenance](docs/reproducibility.md) | Recorded environment, validated analysis scope and historical source |
+| [Testing](docs/testing.md) | Package tests, wheel checks and CI configuration |
+| [Change log](CHANGELOG.md) | Version history and interface changes |
 
 ```bash
-python -m pip install -e ".[analysis]"
 python -m unittest discover -s tests -v
 ```
 
-The suite covers all 64 codons and their nine possible substitutions, mutation probabilities, boundaries, stopping rules, metrics, serial/parallel reproducibility, and the CLI. GitHub Actions runs package checks on Linux and Windows.
+The 89 package tests cover coding coordinates, all 64 codons and nine possible substitutions per codon, mutation probabilities, stopping rules, metrics, reproducibility and CLI output. Package behavior tests and the full human/bat analyses have separate validation records. GitHub Actions defines Linux/Windows checks; consult the run for the relevant commit for its actual CI status.
 
-## Manuscript analysis and license
+The installable code is under `sinabro/`, packaged SBS tables under `sinabro/data/`, executable examples under `examples/`, and tests under `tests/`. Historical interfaces are documented in [migration notes](docs/migration.md); previous implementations remain recoverable in Git history.
 
-The separate [manuscript analysis repository](https://github.com/StudyingAnt/Simple_robustness_analysis_of_cds) contains preprocessing and biological analyses. Package tests and synthetic examples are distinct from reproducing the human/bat figures.
+## Citation and license
+
+Use [CITATION.cff](CITATION.cff) for software attribution and cite the associated manuscript when using its analyses. Record the package commit and analysis commit with each scientific run. The current edition is distinguished from the preserved historical implementation in the provenance guide.
 
 BSD-3-Clause. Copyright Joon-Hyun Song. See [LICENSE](LICENSE).

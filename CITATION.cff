@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "Please cite the associated manuscript and record the exact software commit used."
+type: software
+title: "Sinabro: sequential mutation simulation for coding-sequence robustness"
+version: 3.0.0
+authors:
+  - family-names: Song
+    given-names: Joon-Hyun
+repository-code: "https://github.com/StudyingAnt/sinabro"
+url: "https://github.com/StudyingAnt/sinabro"
+license: BSD-3-Clause

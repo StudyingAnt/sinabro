@@ -16,7 +16,7 @@ python -m unittest discover -s tests -v
 | `test_metrics.py` | Protein distances, stops, pairwise dN/dS, undefined/saturated cases |
 | `test_cli.py` | CSV and manifest contents, reproducibility, validation, overwrite protection |
 
-There are 89 automated tests after removing six checks for interfaces that are no longer shipped. The exhaustive coordinate oracle additionally evaluates 576 codon/substitution combinations inside one test.
+The package has 89 automated tests. The exhaustive coordinate oracle additionally evaluates 576 codon/substitution combinations inside one test.
 
 GitHub Actions is configured for Linux and Windows with Python 3.9 and 3.12, plus a pinned scientific-library job for NumPy 1.21.6 and Biopython 1.79. The pinned job uses Python 3.9 as provided by the runner; it does not claim the precise 3.9.15 patch version. Check the actual Actions result for the relevant commit before citing remote CI as passed.
 

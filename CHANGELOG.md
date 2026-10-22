@@ -2,6 +2,8 @@
 
 ## 3.0.0 — 2026-10-14
 
+Publication-oriented documentation and citation metadata were organized on 2026-10-21, with links to the validated human/bat analysis workflows. Package source, signature data and public interfaces are unchanged by that documentation update.
+
 This edition consolidates the refactored code into one installable `sinabro` package. Removing historical import paths is a breaking interface change; the scientific engine and packaged SBS tables are retained.
 
 - Use `import sinabro as snbr` for trajectories and robustness computations.
